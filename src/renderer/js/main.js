@@ -49,7 +49,7 @@ let promptedForSettings = false;
 function afterDashboardUpdate() {
   const status = state.dashboard && state.dashboard.status;
   if (status === 'loading') {
-    setSplashStatus('מביא נתונים מ-FTC…');
+    setSplashStatus('Getting data from FTC…');
     return;
   }
   const splashGone = hideSplash();

@@ -11,7 +11,7 @@ test('there is no default team; everything else in the defaults is valid', () =>
 });
 
 test('the team number is required', () => {
-  assert.match(validate({ teamNumber: '   ' }, defaults()).errors.teamNumber, /צריך/);
+  assert.match(validate({ teamNumber: '   ' }, defaults()).errors.teamNumber, /Enter your team number/);
 });
 
 test('API credentials cannot be set through settings', () => {

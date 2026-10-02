@@ -14,9 +14,9 @@ export function renderHeader({ settings, dashboard }) {
   const status = $('hdr-status');
   const loading = !dashboard || dashboard.status === 'loading';
   status.classList.toggle('error', Boolean(dashboard && dashboard.error));
-  if (loading) status.textContent = 'טוען…';
+  if (loading) status.textContent = 'Loading…';
   else if (dashboard.error) status.textContent = dashboard.error;
-  else if (dashboard.updatedAt) status.textContent = `${settings.demoMode ? 'הדגמה · ' : ''}עודכן ${clock(dashboard.updatedAt)}`;
+  else if (dashboard.updatedAt) status.textContent = `${settings.demoMode ? 'Demo · ' : ''}Updated ${clock(dashboard.updatedAt)}`;
   else status.textContent = '';
   $('btn-refresh').classList.toggle('spinning', loading);
 }
@@ -26,5 +26,5 @@ export function renderBanner({ dashboard }) {
   // Without any data the error is already shown in the panels themselves.
   const show = Boolean(dashboard && dashboard.error && dashboard.data);
   banner.hidden = !show;
-  if (show) banner.textContent = `לא ניתן לעדכן: ${dashboard.error}. מוצגים הנתונים האחרונים.`;
+  if (show) banner.textContent = `Can't update: ${dashboard.error}. Showing the last data.`;
 }

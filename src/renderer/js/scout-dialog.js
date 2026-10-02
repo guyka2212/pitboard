@@ -1,14 +1,14 @@
 import { $, el, icon, teamLink } from './dom.js';
-import { ltr, stat } from './format.js';
+import { stat } from './format.js';
 
 const COLUMNS = [
-  { key: 'rank', label: 'דירוג', dir: 'asc' },
-  { key: 'number', label: 'קבוצה', dir: 'asc' },
+  { key: 'rank', label: 'Rank', dir: 'asc' },
+  { key: 'number', label: 'Team', dir: 'asc' },
   { key: 'npOpr', label: 'np OPR', dir: 'desc' },
   { key: 'autoOpr', label: 'Auto OPR', dir: 'desc' },
   { key: 'dcOpr', label: 'Teleop OPR', dir: 'desc' },
   { key: 'npAvg', label: 'np AVG', dir: 'desc' },
-  { key: 'record', label: 'מאזן', sortable: false },
+  { key: 'record', label: 'Record', sortable: false },
 ];
 
 const view = { result: null, mode: 'event', sortKey: 'rank', sortDir: 'asc', loading: false };
@@ -36,15 +36,15 @@ function sortedRows(rows) {
 function rankCell(line) {
   if (!line || line.rank === null) return '—';
   if (view.mode === 'event') return `#${line.rank}`;
-  return el('span', { title: `מקום ${line.rank} מתוך ${line.rankedOf} בעולם לפי np OPR` }, `#${line.rank}`);
+  return el('span', { title: `#${line.rank} of ${line.rankedOf} worldwide by np OPR` }, `#${line.rank}`);
 }
 
 function recordCell(line) {
   if (!line) return '—';
   if (view.mode === 'event') {
-    return line.wins === null ? `${line.played ?? 0} מש׳` : `${line.wins}-${line.losses}-${line.ties}`;
+    return line.wins === null ? `${line.played ?? 0} played` : `${line.wins}-${line.losses}-${line.ties}`;
   }
-  return line.matches ? `${line.matches} מש׳` : '—';
+  return line.matches ? `${line.matches} played` : '—';
 }
 
 function renderHead() {
@@ -77,10 +77,10 @@ function renderTable() {
     const tr = el('tr', { class: row.number === ourTeam ? 'ours' : '' },
       el('td', { class: 'rank' }, rankCell(line)),
       el('td', { class: 'team' }, teamLink(row), el('span', { class: 'team-name' }, row.name)),
-      el('td', {}, ltr(stat(line && line.npOpr))),
-      el('td', {}, ltr(stat(line && line.autoOpr))),
-      el('td', {}, ltr(stat(line && line.dcOpr))),
-      el('td', {}, ltr(stat(line && line.npAvg))),
+      el('td', {}, stat(line && line.npOpr)),
+      el('td', {}, stat(line && line.autoOpr)),
+      el('td', {}, stat(line && line.dcOpr)),
+      el('td', {}, stat(line && line.npAvg)),
       el('td', { class: 'record' }, recordCell(line)),
     );
     body.append(tr);
@@ -93,14 +93,14 @@ function renderModeButtons() {
     const mode = button.dataset.mode;
     button.classList.toggle('active', mode === view.mode);
     button.disabled = mode === 'event' && !table.hasEventStats;
-    if (mode === 'season') button.textContent = `עונה ${table.statsSeason}`;
+    if (mode === 'season') button.textContent = `Season ${table.statsSeason}`;
   }
   const notes = [];
-  if (!table.hasEventStats) notes.push('אין עדיין נתונים מהאירוע הזה, אז מוצגים נתוני העונה.');
+  if (!table.hasEventStats) notes.push('No data from this event yet, so season stats are shown.');
   if (table.statsSeason !== table.season) {
-    notes.push(`ל-FTCScout עוד אין נתונים לעונה ${table.season}, לכן המספרים הם מעונה ${table.statsSeason}.`);
+    notes.push(`FTCScout has no ${table.season} data yet, so these numbers are from ${table.statsSeason}.`);
   }
-  if (view.mode === 'season') notes.push('דירוג בעונה = מקום בעולם לפי np OPR.');
+  if (view.mode === 'season') notes.push('Season rank = world rank by np OPR.');
   $('scout-note').textContent = notes.join(' ');
 }
 
@@ -124,7 +124,7 @@ export async function openScout(state) {
   view.loading = true;
   $('scout-sub').textContent = '';
   $('scout-note').textContent = '';
-  showMessage('טוען נתונים מ-FTCScout…');
+  showMessage('Loading data from FTCScout…');
 
   try {
     const result = await window.hub.scoutEvent();
@@ -133,10 +133,10 @@ export async function openScout(state) {
       return;
     }
     view.result = { table: result.table, ourTeam: Number(state.settings.teamNumber) };
-    $('scout-sub').textContent = `${result.event.name} · ${result.table.rows.length} קבוצות`;
+    $('scout-sub').textContent = `${result.event.name} · ${result.table.rows.length} teams`;
     setMode(result.table.hasEventStats ? 'event' : 'season');
   } catch (err) {
-    showMessage(`הטעינה נכשלה: ${err.message}`);
+    showMessage(`Loading failed: ${err.message}`);
   } finally {
     view.loading = false;
   }

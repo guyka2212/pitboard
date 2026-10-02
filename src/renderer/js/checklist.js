@@ -5,7 +5,7 @@ function renderProgress({ settings, checklistState }) {
   const done = checklistState.checked.filter((id) => ids.has(id)).length;
   const total = ids.size;
   const progress = $('check-progress');
-  progress.textContent = total ? `${done}/${total}${done === total ? ' · מוכנים' : ''}` : '';
+  progress.textContent = total ? `${done}/${total}${done === total ? ' · Ready' : ''}` : '';
   progress.classList.toggle('done', total > 0 && done === total);
 }
 
@@ -15,7 +15,7 @@ export function renderChecklist(state, { onToggle }) {
   const checked = new Set(state.checklistState.checked);
 
   if (!state.settings.checklist.length) {
-    list.append(el('li', { class: 'empty-note' }, 'אין פריטים. מוסיפים אותם בהגדרות.'));
+    list.append(el('li', { class: 'empty-note' }, 'No items. Add them in Settings.'));
   }
   for (const item of state.settings.checklist) {
     const box = el('input', { type: 'checkbox', checked: checked.has(item.id) });

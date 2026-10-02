@@ -75,7 +75,7 @@ class AlertServer extends EventEmitter {
 
     await new Promise((resolve) => {
       this.httpServer.once('error', (err) => {
-        const error = err.code === 'EADDRINUSE' ? `פורט ${port} כבר תפוס על ידי תוכנה אחרת` : err.message;
+        const error = err.code === 'EADDRINUSE' ? `Port ${port} is already in use by another program` : err.message;
         this.setStatus({ running: false, port, error });
         resolve();
       });
@@ -181,20 +181,20 @@ class AlertServer extends EventEmitter {
     };
 
     if (this.joinCode && !sameCode(String(msg.joinCode || '').trim().toUpperCase(), this.joinCode)) {
-      return reject(CLOSE.BAD_JOIN_CODE, 'bad_join_code', 'קוד הצטרפות שגוי');
+      return reject(CLOSE.BAD_JOIN_CODE, 'bad_join_code', 'Wrong join code');
     }
     const name = typeof msg.name === 'string' ? msg.name.replace(/\s+/g, ' ').trim() : '';
     if (!name || name.length > 40) {
-      return reject(CLOSE.BAD_HELLO, 'missing_name', 'חסר שם (עד 40 תווים)');
+      return reject(CLOSE.BAD_HELLO, 'missing_name', 'A name is required (up to 40 characters)');
     }
     const id = typeof msg.deviceId === 'string' ? msg.deviceId.trim() : '';
     if (!/^[A-Za-z0-9-]{8,64}$/.test(id)) {
-      return reject(CLOSE.BAD_HELLO, 'bad_device_id', 'מזהה מכשיר לא תקין');
+      return reject(CLOSE.BAD_HELLO, 'bad_device_id', 'Invalid device id');
     }
 
     const existing = this.devices.get(id);
     if (!existing && this.devices.size >= MAX_DEVICES) {
-      return reject(CLOSE.SERVER_FULL, 'server_full', 'הרשימה מלאה');
+      return reject(CLOSE.SERVER_FULL, 'server_full', 'The list is full');
     }
     if (existing && existing.ws && existing.ws !== ws) existing.ws.close(CLOSE.REPLACED, 'replaced');
 
@@ -221,7 +221,7 @@ class AlertServer extends EventEmitter {
     const now = Date.now();
     device.chatTimes = device.chatTimes.filter((t) => now - t < CHAT_WINDOW_MS);
     if (device.chatTimes.length >= CHAT_BURST) {
-      send(ws, { type: 'error', code: 'rate_limited', message: 'יותר מדי הודעות, נסו שוב בעוד רגע', messageId: msg.messageId });
+      send(ws, { type: 'error', code: 'rate_limited', message: 'Too many messages, try again in a moment', messageId: msg.messageId });
       return;
     }
     device.chatTimes.push(now);

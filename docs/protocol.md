@@ -1,11 +1,11 @@
 # Phone protocol
 
 PitBoard runs a small server on the pit laptop. Phones connect to it over a WebSocket,
-and the "התראה" (alert) button next to each name sends that phone a message.
+and the "Alert" button next to each name sends that phone a message.
 
 ## Connecting
 
-- **Port:** 8765 by default (Settings → כפתור חירום).
+- **Port:** 8765 by default (Settings → Emergency button).
 - **Same Wi‑Fi:** `ws://<laptop IP>:8765/`. The addresses are listed in the settings window.
 - **From anywhere:** forward the port in VS Code (Ports tab → Forward a Port → `8765` → right‑click →
   Port Visibility → Public). That gives a URL like `https://abcd1234-8765.euw.devtunnels.ms`;
@@ -35,7 +35,7 @@ Must be the first message, within 10 seconds of connecting.
 
 ### `ack`
 
-Sent when the person dismisses the alert. The laptop shows "אישר" and the time next to the name.
+Sent when the person dismisses the alert. The laptop shows "Confirmed" and the time next to the name.
 
 ```json
 { "type": "ack", "alertId": "…" }
@@ -45,8 +45,8 @@ Sent when the person dismisses the alert. The laptop shows "אישר" and the ti
 
 ```json
 { "type": "welcome", "deviceId": "…", "teamNumber": "18833" }
-{ "type": "alert", "alertId": "uuid", "message": "בואו לפיט עכשיו!", "sentAt": 1791000000000 }
-{ "type": "error", "code": "bad_join_code", "message": "קוד הצטרפות שגוי" }
+{ "type": "alert", "alertId": "uuid", "message": "Come to the pit now!", "sentAt": 1791000000000 }
+{ "type": "error", "code": "bad_join_code", "message": "Wrong join code" }
 ```
 
 `error` codes: `bad_join_code`, `missing_name`, `bad_device_id`, `server_full`. The socket is
@@ -60,11 +60,11 @@ characters after trimming; line breaks are allowed.
 **Laptop → phone**
 
 ```json
-{ "type": "chat", "messageId": "uuid", "text": "תביאי את הסוללה הרזרבית", "sentAt": 1791000000000 }
+{ "type": "chat", "messageId": "uuid", "text": "Bring the spare battery", "sentAt": 1791000000000 }
 ```
 
 The phone answers right away with `chat-received`, and with `chat-read` once the person has
-actually seen the message (chat screen open). The laptop shows "נמסר" / "נקרא" under it.
+actually seen the message (chat screen open). The laptop shows "Delivered" / "Read" under it.
 
 ```json
 { "type": "chat-received", "messageId": "uuid" }
@@ -77,7 +77,7 @@ The same `messageId` can arrive twice (for example after a reconnect); show it o
 **Phone → laptop**
 
 ```json
-{ "type": "chat", "messageId": "<uuid made on the phone>", "text": "בדרך!" }
+{ "type": "chat", "messageId": "<uuid made on the phone>", "text": "On my way!" }
 ```
 
 The laptop answers `{ "type": "chat-received", "messageId": "…" }`. If that doesn't arrive,

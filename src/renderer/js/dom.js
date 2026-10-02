@@ -28,7 +28,7 @@ const ICONS = {
 
 /** A team number that opens the team card when clicked (see main.js). */
 export function teamLink(team) {
-  return el('button', { type: 'button', class: 'team-link', 'data-team': team.number, title: 'נתוני הקבוצה' }, team.display || String(team.number));
+  return el('button', { type: 'button', class: 'team-link', 'data-team': team.number, title: 'Team stats' }, team.display || String(team.number));
 }
 
 export function icon(name, size = 18) {

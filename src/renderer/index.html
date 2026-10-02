@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'" />
@@ -9,7 +9,7 @@
 </head>
 <body>
   <div id="splash" class="splash" role="status" aria-live="polite">
-    <div class="lockup" dir="ltr">
+    <div class="lockup">
       <img src="assets/logo-mark.svg" alt="" class="lockup-mark" />
       <div class="lockup-text">
         <div class="lockup-name">PitBoard</div>
@@ -17,7 +17,7 @@
       </div>
     </div>
     <div class="splash-progress" aria-hidden="true"><span></span></div>
-    <div id="splash-status" class="splash-status">טוען…</div>
+    <div id="splash-status" class="splash-status">Loading…</div>
   </div>
 
   <header class="topbar">
@@ -29,52 +29,51 @@
     <div class="event" id="hdr-event"></div>
     <div class="status">
       <span id="hdr-status" class="status-text" role="status"></span>
-      <button class="icon-btn" id="btn-refresh" title="רענון" aria-label="רענון"></button>
-      <button class="icon-btn" id="btn-scout" title="סקאוטינג" aria-label="סקאוטינג"></button>
-      <button class="icon-btn has-badge" id="btn-chat" title="צ'אט עם הטלפונים" aria-label="צ'אט">
+      <button class="icon-btn" id="btn-refresh" title="Refresh" aria-label="Refresh"></button>
+      <button class="icon-btn" id="btn-scout" title="Scouting" aria-label="Scouting"></button>
+      <button class="icon-btn has-badge" id="btn-chat" title="Chat with phones" aria-label="Chat">
         <span id="chat-badge" class="badge" hidden></span>
       </button>
-      <button class="icon-btn" id="btn-settings" title="הגדרות" aria-label="הגדרות"></button>
+      <button class="icon-btn" id="btn-settings" title="Settings" aria-label="Settings"></button>
     </div>
   </header>
 
   <main class="layout">
-    <section class="panel matches-panel" aria-labelledby="matches-title">
-      <h2 id="matches-title">כל המשחקים</h2>
-      <ol id="matches" class="matches"></ol>
-    </section>
-
     <div class="main-area">
       <div class="row">
-        <section class="panel partner-panel" aria-labelledby="partner-title">
-          <h2 id="partner-title">ברית משחק הבא <span id="next-countdown" class="countdown"></span><span id="next-label" class="pill"></span></h2>
-          <div id="partner" class="partner"></div>
-        </section>
         <section class="panel color-panel" id="color-panel" aria-labelledby="color-title">
-          <h2 id="color-title">צבע</h2>
+          <h2 id="color-title">Alliance</h2>
           <div id="color" class="color-text"></div>
+        </section>
+        <section class="panel partner-panel" aria-labelledby="partner-title">
+          <h2 id="partner-title">Next match partner <span id="next-countdown" class="countdown"></span><span id="next-label" class="pill"></span></h2>
+          <div id="partner" class="partner"></div>
         </section>
       </div>
 
       <div class="row">
+        <section class="panel checklist-panel" aria-labelledby="checklist-title">
+          <h2 id="checklist-title">
+            Checklist
+            <span id="check-progress" class="check-progress"></span>
+            <button id="btn-reset-checklist" class="text-btn">Reset</button>
+          </h2>
+          <ul id="checklist" class="checklist"></ul>
+        </section>
         <section class="panel alerts-panel" aria-labelledby="alerts-title">
           <h2 id="alerts-title">
-            חירום
-            <button id="btn-alert-all" class="alert-all-btn" disabled>התראה לכולם</button>
+            Emergency
+            <button id="btn-alert-all" class="alert-all-btn" disabled>Alert everyone</button>
           </h2>
           <div id="server-status" class="server-status"></div>
           <ul id="devices" class="devices"></ul>
         </section>
-        <section class="panel checklist-panel" aria-labelledby="checklist-title">
-          <h2 id="checklist-title">
-            צ'ק ליסט
-            <span id="check-progress" class="check-progress"></span>
-            <button id="btn-reset-checklist" class="text-btn">איפוס</button>
-          </h2>
-          <ul id="checklist" class="checklist"></ul>
-        </section>
       </div>
     </div>
+    <section class="panel matches-panel" aria-labelledby="matches-title">
+      <h2 id="matches-title">Our matches</h2>
+      <ol id="matches" class="matches"></ol>
+    </section>
   </main>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -83,14 +82,14 @@
     <header class="dialog-head">
       <img src="assets/logo-mark.svg" alt="" class="dialog-mark" />
       <div class="dialog-titles">
-        <h2 id="scout-title">סקאוטינג</h2>
+        <h2 id="scout-title">Scouting</h2>
         <div id="scout-sub" class="dialog-sub"></div>
       </div>
-      <div id="scout-modes" class="segmented" role="group" aria-label="מקור הנתונים">
-        <button type="button" data-mode="event">באירוע</button>
-        <button type="button" data-mode="season">עונה</button>
+      <div id="scout-modes" class="segmented" role="group" aria-label="Data source">
+        <button type="button" data-mode="event">This event</button>
+        <button type="button" data-mode="season">Season</button>
       </div>
-      <button type="button" class="icon-btn" id="scout-close" aria-label="סגירה"></button>
+      <button type="button" class="icon-btn" id="scout-close" aria-label="Close"></button>
     </header>
     <p id="scout-note" class="hint scout-note"></p>
     <div class="table-wrap">
@@ -99,7 +98,7 @@
         <tbody id="scout-body"></tbody>
       </table>
     </div>
-    <p class="hint dialog-foot">לחיצה על מספר קבוצה מציגה את הנתונים והיסטוריית המשחקים שלה · נתונים מ-FTCScout</p>
+    <p class="hint dialog-foot">Click a team number for its stats and match history · Data from FTCScout</p>
   </dialog>
 
   <dialog id="team-card" class="team-card" aria-labelledby="team-title">
@@ -109,7 +108,7 @@
         <h2 id="team-title"></h2>
         <div id="team-sub" class="dialog-sub"></div>
       </div>
-      <button type="button" class="icon-btn" id="team-close" aria-label="סגירה"></button>
+      <button type="button" class="icon-btn" id="team-close" aria-label="Close"></button>
     </header>
     <div id="team-body" class="team-body"></div>
   </dialog>
@@ -118,24 +117,24 @@
     <header class="dialog-head">
       <img src="assets/logo-mark.svg" alt="" class="dialog-mark" />
       <div class="dialog-titles">
-        <h2 id="chat-title">צ'אט</h2>
-        <div class="dialog-sub">הודעות לטלפונים שמחוברים לאפליקציה</div>
+        <h2 id="chat-title">Chat</h2>
+        <div class="dialog-sub">Messages to the phones connected to the app</div>
       </div>
-      <button type="button" class="icon-btn" id="chat-close" aria-label="סגירה"></button>
+      <button type="button" class="icon-btn" id="chat-close" aria-label="Close"></button>
     </header>
     <div class="chat-body">
-      <nav class="chat-sidebar" aria-label="למי לכתוב">
+      <nav class="chat-sidebar" aria-label="Who to write to">
         <ul id="chat-people" class="chat-people"></ul>
       </nav>
       <section class="chat-main" aria-live="polite">
         <div class="chat-with-bar">
           <span id="chat-with" class="chat-with"></span>
-          <span id="chat-offline" class="chat-offline" hidden>לא מחובר כרגע. ההודעה תגיע כשיתחבר</span>
+          <span id="chat-offline" class="chat-offline" hidden>Offline right now. Messages are delivered when the phone reconnects.</span>
         </div>
         <div id="chat-thread" class="chat-thread"></div>
         <form id="chat-form" class="chat-compose" novalidate>
-          <textarea id="chat-text" rows="2" maxlength="600" placeholder="כתבו הודעה… (Enter לשליחה, Shift+Enter לשורה חדשה)" aria-label="הודעה"></textarea>
-          <button type="submit" id="chat-send" class="chat-send" aria-label="שליחה" title="שליחה"></button>
+          <textarea id="chat-text" rows="2" maxlength="600" placeholder="Write a message… (Enter to send, Shift+Enter for a new line)" aria-label="Message"></textarea>
+          <button type="submit" id="chat-send" class="chat-send" aria-label="Send" title="Send"></button>
         </form>
         <div class="chat-foot">
           <span id="chat-error" class="field-error" role="alert"></span>
@@ -147,73 +146,73 @@
 
   <dialog id="match-alert" class="match-alert" aria-labelledby="ma-content">
     <div id="ma-content"></div>
-    <button type="button" id="ma-dismiss" class="ma-dismiss">הבנתי</button>
+    <button type="button" id="ma-dismiss" class="ma-dismiss">Got it</button>
   </dialog>
 
   <dialog id="settings" class="settings" aria-labelledby="settings-title">
     <form id="settings-form" novalidate>
-      <h2 id="settings-title">הגדרות</h2>
+      <h2 id="settings-title">Settings</h2>
 
       <fieldset>
-        <legend>קבוצה ואירוע</legend>
-        <label>מספר קבוצה
+        <legend>Team and event</legend>
+        <label>Team number
           <input name="teamNumber" inputmode="numeric" required pattern="[0-9]{1,5}" maxlength="5" />
           <small class="field-error" data-error-for="teamNumber"></small>
         </label>
-        <p class="hint">נשמר במחשב הזה, כך שמזינים אותו רק פעם אחת.</p>
-        <label>עונה
+        <p class="hint">Saved on this computer, so you only enter it once.</p>
+        <label>Season
           <input name="season" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" id="season-input" />
           <small class="field-error" data-error-for="season"></small>
         </label>
-        <label>קוד אירוע
-          <input name="eventCode" maxlength="20" placeholder="ריק = האירוע הבא של הקבוצה" />
+        <label>Event code
+          <input name="eventCode" maxlength="20" placeholder="Empty = the team's next event" />
           <small class="field-error" data-error-for="eventCode"></small>
         </label>
       </fieldset>
 
       <fieldset>
-        <legend>תצוגה</legend>
-        <label>רענון כל (שניות)
+        <legend>Display</legend>
+        <label>Refresh every (seconds)
           <input name="refreshSeconds" type="number" min="15" max="3600" required />
           <small class="field-error" data-error-for="refreshSeconds"></small>
         </label>
-        <label class="inline"><input name="demoMode" type="checkbox" /> מצב הדגמה (נתונים לדוגמה)</label>
+        <label class="inline"><input name="demoMode" type="checkbox" /> Demo mode (sample data)</label>
       </fieldset>
 
       <fieldset>
-        <legend>צ'ק ליסט לפני כל משחק</legend>
-        <label>פריט בכל שורה
+        <legend>Pre-match checklist</legend>
+        <label>One item per line
           <textarea name="checklist" rows="7"></textarea>
           <small class="field-error" data-error-for="checklist"></small>
         </label>
       </fieldset>
 
       <fieldset>
-        <legend>כפתור חירום (שרת לטלפונים)</legend>
+        <legend>Emergency button (server for phones)</legend>
         <div class="server-box" id="server-box"></div>
-        <label>פורט
+        <label>Port
           <input name="serverPort" type="number" min="1024" max="65535" required />
           <small class="field-error" data-error-for="serverPort"></small>
         </label>
-        <label>קוד הצטרפות
-          <input name="joinCode" autocomplete="off" maxlength="32" class="ltr" />
+        <label>Join code
+          <input name="joinCode" autocomplete="off" maxlength="32" />
           <small class="field-error" data-error-for="joinCode"></small>
         </label>
-        <label>הודעת ההתראה
+        <label>Alert message
           <input name="alertMessage" maxlength="120" />
           <small class="field-error" data-error-for="alertMessage"></small>
         </label>
         <p class="hint">
-          חיבור מכל מקום: ב-VS Code פותחים את לשונית <b>Ports</b>, מוסיפים את הפורט (Forward a Port),
-          ובקליק ימני משנים את Port Visibility ל-<b>Public</b>. את הכתובת שמתקבלת מכניסים באפליקציה בטלפון.
-          ברשת המקומית צריך לאשר את חלון חומת האש של Windows בהפעלה הראשונה.
+          To connect from anywhere: in VS Code open the <b>Ports</b> tab, add the port (Forward a Port),
+          then right-click it and set Port Visibility to <b>Public</b>. Enter the address you get in the phone app.
+          On the local network, allow the Windows Firewall prompt the first time PitBoard runs.
         </p>
       </fieldset>
 
       <p class="field-error form-error" data-error-for="form"></p>
       <div class="actions">
-        <button type="submit" class="primary" id="btn-save">שמירה</button>
-        <button type="button" id="btn-cancel">ביטול</button>
+        <button type="submit" class="primary" id="btn-save">Save</button>
+        <button type="button" id="btn-cancel">Cancel</button>
       </div>
     </form>
   </dialog>

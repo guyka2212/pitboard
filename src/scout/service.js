@@ -23,12 +23,12 @@ const QUICK_STATS = 'tot { value rank } auto { value } dc { value } count';
  */
 async function eventTable({ season, eventCode, teams }) {
   const numbers = [...new Set(teams.map((t) => t.number))].filter(isTeamNumber);
-  if (!numbers.length) throw new ScoutError('אין רשימת קבוצות לאירוע הזה עדיין');
+  if (!numbers.length) throw new ScoutError('This event has no team list yet');
 
   return cached(`event:${season}:${eventCode}:${numbers.join(',')}`, async () => {
     const types = await loadTypes();
     const statsSeason = statsSeasonFor(types, season);
-    if (!statsSeason) throw new ScoutError('ל-FTCScout אין נתונים לעונה הזו');
+    if (!statsSeason) throw new ScoutError('FTCScout has no data for this season');
     const stats = statsFragment(types);
 
     // Team numbers are checked integers, so inlining them into the aliases is safe.
@@ -69,12 +69,12 @@ async function eventTable({ season, eventCode, teams }) {
 
 /** One team: stats at the current event, season stats and the season's match history. */
 async function teamCard({ number, season, eventCode }) {
-  if (!isTeamNumber(number)) throw new ScoutError('מספר קבוצה לא תקין');
+  if (!isTeamNumber(number)) throw new ScoutError('Invalid team number');
 
   return cached(`team:${number}:${season}:${eventCode || ''}`, async () => {
     const types = await loadTypes();
     const statsSeason = statsSeasonFor(types, season);
-    if (!statsSeason) throw new ScoutError('ל-FTCScout אין נתונים לעונה הזו');
+    if (!statsSeason) throw new ScoutError('FTCScout has no data for this season');
 
     const data = await query(
       `query ($number: Int!, $statsSeason: Int!) {
@@ -98,7 +98,7 @@ async function teamCard({ number, season, eventCode }) {
     );
 
     const team = data.team;
-    if (!team) throw new ScoutError(`קבוצה ${number} לא נמצאה ב-FTCScout`);
+    if (!team) throw new ScoutError(`Team ${number} was not found on FTCScout`);
     const here = statsSeason === season && eventCode ? team.events.find((e) => e.eventCode === eventCode) : null;
 
     return {

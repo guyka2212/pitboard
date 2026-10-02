@@ -4,15 +4,15 @@ import { COLOR_NAME, OUTCOME_NAME, matchTime } from './format.js';
 let scrolledToKey = null;
 
 function resultCell(match, isNext) {
-  if (isNext) return el('div', { class: 'm-result next' }, 'הבא');
+  if (isNext) return el('div', { class: 'm-result next' }, 'Next');
   if (match.score && match.outcome) {
     return el('div', { class: `m-result ${match.outcome}` },
       OUTCOME_NAME[match.outcome],
-      // our score first; always LTR so it doesn't flip inside the RTL layout
-      el('bdi', { dir: 'ltr', class: 'm-score' }, `${match.score.ours} : ${match.score.theirs}`),
+      // our score first
+      el('span', { class: 'm-score' }, `${match.score.ours} : ${match.score.theirs}`),
     );
   }
-  return el('div', { class: 'm-result' }, match.started ? 'משוחק' : COLOR_NAME[match.alliance]);
+  return el('div', { class: 'm-result' }, match.started ? 'Playing' : COLOR_NAME[match.alliance]);
 }
 
 function teamsLine(label, teams, className) {
@@ -29,7 +29,7 @@ export function renderMatchList({ dashboard }) {
   list.replaceChildren();
   const data = dashboard && dashboard.data;
   if (!data || !data.matches.length) {
-    if (data && data.event) list.append(el('li', { class: 'empty-note' }, 'לוח המשחקים עוד לא פורסם'));
+    if (data && data.event) list.append(el('li', { class: 'empty-note' }, 'The match schedule is not published yet'));
     return;
   }
 
@@ -41,8 +41,8 @@ export function renderMatchList({ dashboard }) {
       el('span', { class: 'bar', title: COLOR_NAME[match.alliance] }),
       el('div', { class: 'm-label', title: match.description }, match.label, el('span', { class: 'm-time' }, matchTime(match.startTime))),
       el('div', { class: 'm-sides' },
-        teamsLine('עם', match.partners, 'with'),
-        teamsLine('נגד', match.opponents, 'against'),
+        teamsLine('With', match.partners, 'with'),
+        teamsLine('vs', match.opponents, 'against'),
       ),
       resultCell(match, isNext),
     );

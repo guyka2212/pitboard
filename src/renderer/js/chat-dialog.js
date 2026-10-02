@@ -14,14 +14,14 @@ export function renderChatBadge(state) {
   const badge = $('chat-badge');
   badge.textContent = count > 99 ? '99+' : String(count);
   badge.hidden = count === 0;
-  $('btn-chat').setAttribute('aria-label', count ? `צ'אט, ${count} הודעות שלא נקראו` : "צ'אט");
+  $('btn-chat').setAttribute('aria-label', count ? `Chat, ${count} unread` : 'Chat');
 }
 
 function renderPeople(state) {
   const list = $('chat-people');
   list.replaceChildren();
   if (!state.devices.length) {
-    list.append(el('li', { class: 'empty-note' }, 'אף טלפון עוד לא התחבר.'));
+    list.append(el('li', { class: 'empty-note' }, 'No phone has connected yet.'));
     return;
   }
   for (const device of state.devices) {
@@ -39,7 +39,7 @@ function renderPeople(state) {
   }
 }
 
-const STATUS_LABEL = { read: 'נקרא', delivered: 'נמסר', pending: 'ממתין' };
+const STATUS_LABEL = { read: 'Read', delivered: 'Delivered', pending: 'Waiting' };
 
 function statusOf(message) {
   if (message.readAt) return 'read';
@@ -58,11 +58,11 @@ function renderThread(state) {
   $('chat-send').disabled = !device || view.sending;
 
   if (!device) {
-    thread.append(el('p', { class: 'empty-note chat-empty' }, state.devices.length ? 'בוחרים למי לכתוב' : ''));
+    thread.append(el('p', { class: 'empty-note chat-empty' }, state.devices.length ? 'Choose who to write to' : ''));
     return;
   }
   if (!view.messages.length) {
-    thread.append(el('p', { class: 'empty-note chat-empty' }, `עוד אין הודעות עם ${device.name}`));
+    thread.append(el('p', { class: 'empty-note chat-empty' }, `No messages with ${device.name} yet`));
   }
   for (const message of view.messages) {
     const out = message.direction === 'out';
@@ -110,7 +110,7 @@ async function send(state) {
     input.value = '';
     updateCounter();
   } catch (err) {
-    $('chat-error').textContent = `השליחה נכשלה: ${err.message}`;
+    $('chat-error').textContent = `Sending failed: ${err.message}`;
   } finally {
     view.sending = false;
     renderThread(state);

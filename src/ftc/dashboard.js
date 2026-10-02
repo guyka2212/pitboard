@@ -57,7 +57,7 @@ async function findEvent(api, season, settings) {
   if (settings.eventCode) {
     const data = await api.get(`/${season}/events?eventCode=${encodeURIComponent(settings.eventCode)}`);
     const event = (data.events || [])[0];
-    if (!event) throw new FtcApiError(`האירוע ${settings.eventCode} לא נמצא בעונה ${season}`, 404);
+    if (!event) throw new FtcApiError(`Event ${settings.eventCode} not found in the ${season} season`, 404);
     return event;
   }
   const data = await api.get(`/${season}/events?teamNumber=${settings.teamNumber}`);

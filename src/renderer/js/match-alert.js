@@ -24,8 +24,8 @@ export function showMatchAlert({ match, title }) {
   $('ma-content').replaceChildren(
     el('div', { class: 'ma-title' }, title),
     el('div', { class: 'ma-match' }, `${match.label} · ${COLOR_NAME[match.alliance]} · ${match.station}`),
-    partners && el('div', { class: 'ma-line' }, `עם ${partners}`),
-    vs && el('div', { class: 'ma-line' }, `נגד ${vs}`),
+    partners && el('div', { class: 'ma-line' }, `With ${partners}`),
+    vs && el('div', { class: 'ma-line' }, `Against ${vs}`),
   );
 
   if (!dialog.open) dialog.showModal();

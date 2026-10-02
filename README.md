@@ -6,11 +6,11 @@ that rings a team member's phone and calls them back to the pit.
 
 | Area                   | Shows |
 |------------------------|-------|
-| **צבע**                | Alliance color and station for the next match |
-| **ברית משחק הבא**      | Alliance partner and opponents for the next match, and how many matches are left before it |
-| **כל המשחקים**         | All of your matches at the event: partner, opponents, color, result. The next one is highlighted |
-| **צ'ק ליסט**           | Pre-match checklist. It clears itself whenever the next match changes |
-| **חירום**              | Phones connected through the phone app, each with an alert button |
+| **Alliance**            | Alliance color and station for the next match |
+| **Next match partner**  | Alliance partner and opponents for the next match, and how many matches are left before it |
+| **Our matches**         | All of your matches at the event: partner, opponents, color, result. The next one is highlighted |
+| **Checklist**           | Pre-match checklist. It clears itself whenever the next match changes |
+| **Emergency**           | Phones connected through the phone app, each with an alert button |
 
 When only two matches are left before yours, the app shows a full-screen alert with sound. It also
 flashes the taskbar button and sends a Windows notification, once per match.
@@ -103,7 +103,7 @@ src/ftc/         FTC Events API client and schedule parsing
 src/scout/       FTCScout client, season detection and stats shaping
 src/alerts/      WebSocket server for the phones
 src/settings/    Settings validation and storage
-src/renderer/    The window (Hebrew, RTL), split into one module per panel
+src/renderer/    The window, split into one module per panel
 test/            node:test suites, run with `npm test`
 scripts/         build-icon.js (SVG → .ico)
 docs/            Phone protocol and the FTC API spec it was built against

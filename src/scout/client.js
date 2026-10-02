@@ -20,7 +20,7 @@ async function query(text, variables = {}) {
     });
   } catch (err) {
     const reason = err.name === 'TimeoutError' ? 'timeout' : err.cause?.code || err.name;
-    throw new ScoutError(`אין חיבור ל-FTCScout (${reason})`);
+    throw new ScoutError(`Can't reach FTCScout (${reason})`);
   }
   let body = null;
   try {
@@ -30,10 +30,10 @@ async function query(text, variables = {}) {
   }
   if (!res.ok || !body) {
     const detail = body?.errors?.[0]?.message;
-    throw new ScoutError(`שגיאה מ-FTCScout (${res.status}${detail ? `: ${detail}` : ''})`);
+    throw new ScoutError(`FTCScout error (${res.status}${detail ? `: ${detail}` : ''})`);
   }
   // Partial errors are normal (e.g. one team that FTCScout doesn't know); only fail when nothing came back.
-  if (!body.data) throw new ScoutError(body.errors?.[0]?.message || 'שגיאה מ-FTCScout');
+  if (!body.data) throw new ScoutError(body.errors?.[0]?.message || 'FTCScout error');
   return body.data;
 }
 

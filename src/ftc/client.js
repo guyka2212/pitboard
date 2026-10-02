@@ -11,10 +11,10 @@ class FtcApiError extends Error {
 }
 
 const STATUS_MESSAGES = {
-  401: 'שם המשתמש או מפתח ה-API שגויים',
-  404: 'האירוע לא נמצא',
-  429: 'יותר מדי בקשות לשרת FTC, ננסה שוב בעוד רגע',
-  503: 'שרת FTC לא זמין כרגע',
+  401: 'The FTC API username or key is wrong',
+  404: 'Event not found',
+  429: 'Too many requests to the FTC server, retrying shortly',
+  503: 'The FTC server is unavailable right now',
 };
 
 function createClient({ apiUsername, apiKey }) {
@@ -29,17 +29,17 @@ function createClient({ apiUsername, apiKey }) {
       });
     } catch (err) {
       const reason = err.name === 'TimeoutError' ? 'timeout' : err.cause?.code || err.name;
-      throw new FtcApiError(`אין חיבור לשרת FTC (${reason})`, 0);
+      throw new FtcApiError(`Can't reach the FTC server (${reason})`, 0);
     }
     if (!res.ok) {
-      throw new FtcApiError(STATUS_MESSAGES[res.status] || `שגיאה משרת FTC (${res.status})`, res.status);
+      throw new FtcApiError(STATUS_MESSAGES[res.status] || `FTC server error (${res.status})`, res.status);
     }
     const text = await res.text();
     if (!text) return {};
     try {
       return JSON.parse(text);
     } catch {
-      throw new FtcApiError('תשובה לא תקינה משרת FTC', res.status);
+      throw new FtcApiError('Invalid response from the FTC server', res.status);
     }
   }
 

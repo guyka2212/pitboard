@@ -45,7 +45,7 @@ class DashboardService extends EventEmitter {
       if (!this.isConfigured()) {
         this.state = { status: 'unconfigured', data: null, error: null, updatedAt: null };
       } else if (!settings.demoMode && !this.getCredentials()) {
-        this.state = { status: 'error', data: null, error: 'חסר חשבון FTC API בהתקנה (ftc-credentials.json)', updatedAt: null };
+        this.state = { status: 'error', data: null, error: 'This build has no FTC API account (ftc-credentials.json)', updatedAt: null };
       } else {
         const data = settings.demoMode
           ? demoDashboard(settings.teamNumber)

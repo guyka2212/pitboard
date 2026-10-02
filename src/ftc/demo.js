@@ -29,7 +29,7 @@ const ON_FIELD = 11;
 
 function demoDashboard(teamNumber) {
   const us = Number(teamNumber);
-  const names = { ...NAMES, [us]: 'הקבוצה שלנו' };
+  const names = { ...NAMES, [us]: 'Our Team' };
   const day = new Date().toISOString().slice(0, 10);
   const pad = (n) => String(n).padStart(2, '0');
 
@@ -69,7 +69,7 @@ function demoDashboard(teamNumber) {
     season: 2026,
     teamNumber: us,
     teamName: names[us],
-    event: { code: 'DEMO', name: 'אירוע הדגמה', city: '', dateStart: day, dateEnd: day },
+    event: { code: 'DEMO', name: 'Demo Event', city: '', dateStart: day, dateEnd: day },
     eventTeams: Object.entries(names).map(([number, name]) => ({ number: Number(number), name })),
     ...buildMatches(schedule, us, names),
   };

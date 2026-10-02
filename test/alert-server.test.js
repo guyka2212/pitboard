@@ -126,7 +126,7 @@ test('a port that is already taken is reported, not thrown', async (t) => {
   await second.start(server.status.port);
   t.after(() => second.stop());
   assert.equal(second.status.running, false);
-  assert.match(second.status.error, /תפוס/);
+  assert.match(second.status.error, /already in use/);
 });
 
 test('chat: laptop to phone, receipts, and a reply', async (t) => {

@@ -18,12 +18,12 @@ function showErrors(errors = {}) {
 
 async function copy(text, button) {
   await window.hub.copyText(text);
-  button.replaceChildren(icon('check', 14), 'הועתק');
-  setTimeout(() => button.replaceChildren('העתקה'), 1200);
+  button.replaceChildren(icon('check', 14), 'Copied');
+  setTimeout(() => button.replaceChildren('Copy'), 1200);
 }
 
 function copyRow(value) {
-  const button = el('button', { type: 'button', class: 'text-btn' }, 'העתקה');
+  const button = el('button', { type: 'button', class: 'text-btn' }, 'Copy');
   button.addEventListener('click', () => copy(value, button));
   return el('div', { class: 'sb-row' }, el('code', {}, value), button);
 }
@@ -37,18 +37,18 @@ export function renderServerBox({ serverStatus, addresses, settings }) {
   box.classList.toggle('error', !ok);
   box.append(
     el('div', { class: 'sb-status' }, el('span', { class: 'sb-dot' }),
-      ok ? 'השרת פעיל והפורט פתוח' : `השרת לא פעיל${serverStatus.error ? `: ${serverStatus.error}` : ''}`),
+      ok ? 'Server running, port open' : `Server not running${serverStatus.error ? `: ${serverStatus.error}` : ''}`),
   );
   if (!ok) return;
 
-  box.append(el('div', { class: 'sb-port' }, 'פורט', el('b', {}, String(serverStatus.port))));
+  box.append(el('div', { class: 'sb-port' }, 'Port', el('b', {}, String(serverStatus.port))));
   for (const url of [`http://localhost:${serverStatus.port}`, ...addresses.map((a) => `http://${a}:${serverStatus.port}`)]) {
     box.append(copyRow(url));
   }
   box.append(
     settings.joinCode
-      ? el('div', { class: 'sb-port' }, 'קוד הצטרפות', el('b', { class: 'ltr' }, settings.joinCode))
-      : el('p', { class: 'sb-warning' }, 'אין קוד הצטרפות: כל מי שיודע את הכתובת יכול להצטרף לרשימה.'),
+      ? el('div', { class: 'sb-port' }, 'Join code', el('b', {}, settings.joinCode))
+      : el('p', { class: 'sb-warning' }, 'No join code: anyone who knows the address can join the list.'),
   );
 }
 
@@ -58,7 +58,7 @@ export function openSettings(state) {
   f.elements.demoMode.checked = Boolean(state.settings.demoMode);
   f.elements.checklist.value = state.settings.checklist.map((item) => item.text).join('\n');
 
-  $('season-input').placeholder = `ריק = אוטומטי (${state.seasonGuess})`;
+  $('season-input').placeholder = `Empty = automatic (${state.seasonGuess})`;
 
   showErrors();
   renderServerBox(state);
@@ -96,7 +96,7 @@ export function initSettingsDialog(state, { onSaved }) {
       dialog().close();
       onSaved();
     } catch (err) {
-      showErrors({ form: `השמירה נכשלה: ${err.message}` });
+      showErrors({ form: `Saving failed: ${err.message}` });
     } finally {
       save.disabled = false;
     }

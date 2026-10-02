@@ -1,16 +1,16 @@
 import { $, el, icon, teamLink } from './dom.js';
-import { COLOR_NAME, OUTCOME_NAME, ltr, shortDate, stat } from './format.js';
+import { COLOR_NAME, OUTCOME_NAME, shortDate, stat } from './format.js';
 
 let requestId = 0;
 
 function tiles(line, rankText) {
-  const tile = (label, value) => el('div', { class: 'tile' }, el('div', { class: 'tile-value' }, ltr(value)), el('div', { class: 'tile-label' }, label));
+  const tile = (label, value) => el('div', { class: 'tile' }, el('div', { class: 'tile-value' }, value), el('div', { class: 'tile-label' }, label));
   return el('div', { class: 'tiles' },
     tile('np OPR', stat(line.npOpr)),
     tile('Auto OPR', stat(line.autoOpr)),
     tile('Teleop OPR', stat(line.dcOpr)),
     tile('np AVG', stat(line.npAvg)),
-    tile('דירוג', rankText),
+    tile('Rank', rankText),
   );
 }
 
@@ -18,7 +18,7 @@ function statsSection(title, line, rankText, note) {
   return el('section', { class: 'tc-section' },
     el('h3', {}, title),
     note && el('p', { class: 'hint' }, note),
-    line ? tiles(line, rankText) : el('p', { class: 'empty-note' }, 'אין נתונים עדיין'),
+    line ? tiles(line, rankText) : el('p', { class: 'empty-note' }, 'No data yet'),
   );
 }
 
@@ -32,20 +32,20 @@ function historyRow(match) {
     el('td', {}, teams(match.opponents)),
     el('td', { class: `h-result ${match.outcome || ''}` },
       match.score
-        ? [OUTCOME_NAME[match.outcome], ' ', el('bdi', { dir: 'ltr' }, `${match.score.ours} : ${match.score.theirs}`)]
-        : match.played ? 'משוחק' : 'טרם שוחק'),
+        ? `${OUTCOME_NAME[match.outcome]} ${match.score.ours} : ${match.score.theirs}`
+        : match.played ? 'Played' : 'Not played yet'),
   );
 }
 
 function historySection(history) {
-  if (!history.length) return el('section', { class: 'tc-section' }, el('h3', {}, 'היסטוריית משחקים'), el('p', { class: 'empty-note' }, 'אין משחקים בעונה הזו'));
+  if (!history.length) return el('section', { class: 'tc-section' }, el('h3', {}, 'Match history'), el('p', { class: 'empty-note' }, 'No matches this season'));
   return el('section', { class: 'tc-section' },
-    el('h3', {}, 'היסטוריית משחקים'),
+    el('h3', {}, 'Match history'),
     history.map((event) =>
       el('div', { class: 'h-event' },
         el('div', { class: 'h-event-name' }, event.name, el('span', {}, shortDate(event.start))),
         el('table', { class: 'h-table' },
-          el('thead', {}, el('tr', {}, el('th', {}, 'משחק'), el('th', {}, 'עם'), el('th', {}, 'נגד'), el('th', {}, 'תוצאה'))),
+          el('thead', {}, el('tr', {}, el('th', {}, 'Match'), el('th', {}, 'With'), el('th', {}, 'Against'), el('th', {}, 'Result'))),
           el('tbody', {}, event.matches.map(historyRow)),
         ),
       )),
@@ -54,7 +54,7 @@ function historySection(history) {
 
 function renderCard(card) {
   const seasonNote = card.statsSeason !== card.season
-    ? `ל-FTCScout עוד אין נתונים לעונה ${card.season}, אז מוצגת עונה ${card.statsSeason}.`
+    ? `FTCScout has no ${card.season} data yet, so ${card.statsSeason} is shown.`
     : null;
   const season = card.seasonStats;
   const seasonRank = season && season.rank ? `#${season.rank}` : '—';
@@ -62,9 +62,9 @@ function renderCard(card) {
   $('team-title').replaceChildren(el('span', { class: 'tc-number' }, String(card.number)), el('span', { class: 'tc-name' }, card.name));
   $('team-sub').textContent = card.location;
   $('team-body').replaceChildren(
-    card.eventCode && statsSection('באירוע הנוכחי', card.event, card.event && card.event.rank ? `#${card.event.rank}` : '—'),
-    statsSection(`עונה ${card.statsSeason}`, season, seasonRank,
-      [seasonNote, season && season.rankedOf ? `דירוג = מקום בעולם לפי np OPR, מתוך ${season.rankedOf} קבוצות.` : null].filter(Boolean).join(' ')),
+    card.eventCode && statsSection('This event', card.event, card.event && card.event.rank ? `#${card.event.rank}` : '—'),
+    statsSection(`Season ${card.statsSeason}`, season, seasonRank,
+      [seasonNote, season && season.rankedOf ? `Rank = world rank by np OPR, out of ${season.rankedOf} teams.` : null].filter(Boolean).join(' ')),
     historySection(card.history),
   );
 }
@@ -74,7 +74,7 @@ export async function openTeam(number) {
   const id = ++requestId;
   $('team-title').replaceChildren(el('span', { class: 'tc-number' }, String(number)));
   $('team-sub').textContent = '';
-  $('team-body').replaceChildren(el('p', { class: 'empty-note' }, 'טוען נתונים מ-FTCScout…'));
+  $('team-body').replaceChildren(el('p', { class: 'empty-note' }, 'Loading data from FTCScout…'));
   if (!dialog.open) dialog.showModal();
 
   try {
@@ -86,7 +86,7 @@ export async function openTeam(number) {
     }
     renderCard(result.card);
   } catch (err) {
-    if (id === requestId) $('team-body').replaceChildren(el('p', { class: 'empty-note' }, `הטעינה נכשלה: ${err.message}`));
+    if (id === requestId) $('team-body').replaceChildren(el('p', { class: 'empty-note' }, `Loading failed: ${err.message}`));
   }
 }
 

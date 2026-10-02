@@ -90,11 +90,11 @@ function registerIpc({ state, store, alertServer, dashboard }) {
   handle('chat-thread', (deviceId) => (isId(deviceId) ? alertServer.chatThread(deviceId) : null));
 
   handle('chat-send', (deviceId, text) => {
-    if (!isId(deviceId)) return { ok: false, error: 'לא נבחר נמען' };
-    if (typeof text !== 'string' || !text.trim()) return { ok: false, error: 'ההודעה ריקה' };
-    if (text.length > MAX_CHAT_TEXT) return { ok: false, error: `עד ${MAX_CHAT_TEXT} תווים` };
+    if (!isId(deviceId)) return { ok: false, error: 'No recipient selected' };
+    if (typeof text !== 'string' || !text.trim()) return { ok: false, error: 'The message is empty' };
+    if (text.length > MAX_CHAT_TEXT) return { ok: false, error: `Up to ${MAX_CHAT_TEXT} characters` };
     const message = alertServer.sendChat(deviceId, text);
-    return message ? { ok: true, message } : { ok: false, error: 'הטלפון הוסר מהרשימה' };
+    return message ? { ok: true, message } : { ok: false, error: 'That phone was removed from the list' };
   });
 
   handle('copy-text', (text) => {
@@ -107,14 +107,14 @@ function registerIpc({ state, store, alertServer, dashboard }) {
   // messages with its own text, and the window shows these errors as they are.
   function scoutContext() {
     const data = dashboard.state.data;
-    if (state.settings.demoMode) return { error: 'סקאוטינג לא זמין במצב הדגמה' };
+    if (state.settings.demoMode) return { error: 'Scouting is not available in demo mode' };
     return { data, season: (data && data.season) || Number(state.settings.season) || seasonForDate() };
   }
 
   handle('scout-event', async () => {
     const { error, data, season } = scoutContext();
     if (error) return { ok: false, error };
-    if (!data || !data.event) return { ok: false, error: 'אין עדיין אירוע לקבוצה, אז אין מה לסקאוט' };
+    if (!data || !data.event) return { ok: false, error: 'The team has no event yet, so there is nothing to scout' };
     try {
       const table = await scout.eventTable({ season, eventCode: data.event.code, teams: data.eventTeams || [] });
       return { ok: true, event: data.event, table };

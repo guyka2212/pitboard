@@ -94,7 +94,7 @@ async function start() {
     if (!win || win.isDestroyed() || win.isFocused()) return;
     win.flashFrame(true);
     if (Notification.isSupported()) {
-      const notification = new Notification({ title: `הודעה מ${name}`, body: message.text, icon: ICON });
+      const notification = new Notification({ title: `Message from ${name}`, body: message.text, icon: ICON });
       notification.on('click', () => {
         if (win.isMinimized()) win.restore();
         win.focus();

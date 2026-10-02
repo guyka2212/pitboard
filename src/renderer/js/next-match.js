@@ -2,22 +2,22 @@ import { $, el, teamLink } from './dom.js';
 import { COLOR_NAME, matchTime } from './format.js';
 
 function emptyMessage(dashboard) {
-  if (!dashboard || dashboard.status === 'loading') return 'טוען נתונים…';
-  if (dashboard.status === 'unconfigured') return 'מזינים את מספר הקבוצה בהגדרות';
-  if (!dashboard.data) return dashboard.error ? 'אין נתונים' : '';
-  if (!dashboard.data.event) return `עוד לא פורסמו אירועים לקבוצה בעונה ${dashboard.data.season}`;
+  if (!dashboard || dashboard.status === 'loading') return 'Loading data…';
+  if (dashboard.status === 'unconfigured') return 'Enter your team number in Settings';
+  if (!dashboard.data) return dashboard.error ? 'No data' : '';
+  if (!dashboard.data.event) return `No events published for the team in the ${dashboard.data.season} season yet`;
   if (!dashboard.data.nextMatch) {
-    return dashboard.data.matches.length ? 'אין משחקים נוספים באירוע' : 'לוח המשחקים עוד לא פורסם';
+    return dashboard.data.matches.length ? 'No more matches at this event' : 'The match schedule is not published yet';
   }
   return null;
 }
 
 function countdownText(match, onField) {
   if (!Number.isInteger(match.matchesBefore)) return '';
-  const field = onField ? ` · על המגרש: ${onField}` : '';
-  if (match.matchesBefore === 0) return `הבא בתור${field}`;
-  if (match.matchesBefore === 1) return `עוד משחק אחד${field}`;
-  return `עוד ${match.matchesBefore} משחקים${field}`;
+  const field = onField ? ` · on field: ${onField}` : '';
+  if (match.matchesBefore === 0) return `Up next${field}`;
+  if (match.matchesBefore === 1) return `1 match away${field}`;
+  return `${match.matchesBefore} matches away${field}`;
 }
 
 export function renderNextMatch({ dashboard }) {
@@ -51,15 +51,15 @@ export function renderNextMatch({ dashboard }) {
           el('div', { class: 'p-number' }, teamLink(team)),
           el('div', { class: 'p-name' }, team.name || '—'),
         ))
-    : [el('div', { class: 'empty' }, 'אין שותף ברית במשחק הזה')];
+    : [el('div', { class: 'empty' }, 'No alliance partner in this match')];
 
   partner.append(
     el('div', { class: 'partner-teams' }, partners),
     match.opponents.length > 0 &&
       el('div', { class: `versus ${match.alliance === 'red' ? 'blue' : 'red'}` },
-        el('span', { class: 'versus-label' }, 'נגד'),
+        el('span', { class: 'versus-label' }, 'vs'),
         match.opponents.map((team) => el('span', { class: 'versus-team' }, teamLink(team), el('small', {}, team.name))),
       ),
-    match.startTime && el('div', { class: 'p-time' }, `משחק ${match.label} · ${matchTime(match.startTime)}`),
+    match.startTime && el('div', { class: 'p-time' }, `Match ${match.label} · ${matchTime(match.startTime)}`),
   );
 }

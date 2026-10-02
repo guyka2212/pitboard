@@ -19,10 +19,10 @@ class MatchAlert {
 }
 
 function describe(match) {
-  const color = match.alliance === 'red' ? 'אדום' : 'כחול';
+  const color = match.alliance === 'red' ? 'Red' : 'Blue';
   const partners = match.partners.map((t) => t.display).join(', ');
-  const before = match.matchesBefore === 0 ? 'המשחק שלנו הבא בתור!' : `עוד ${match.matchesBefore} משחקים למשחק שלנו`;
-  return { title: before, body: `${match.label} · ${color}${partners ? ` · עם ${partners}` : ''}` };
+  const before = match.matchesBefore === 0 ? 'Our match is up next!' : `${match.matchesBefore} matches until ours`;
+  return { title: before, body: `${match.label} · ${color}${partners ? ` · with ${partners}` : ''}` };
 }
 
 module.exports = { MatchAlert, describe, MATCHES_BEFORE };
