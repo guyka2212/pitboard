@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>PitBoard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div id="splash" class="splash" role="status" aria-live="polite">
+    <div class="lockup" dir="ltr">
+      <img src="assets/logo-mark.svg" alt="" class="lockup-mark" />
+      <div class="lockup-text">
+        <div class="lockup-name">PitBoard</div>
+        <div class="lockup-tagline">Next match · Checklist · Pit alert</div>
+      </div>
+    </div>
+    <div class="splash-progress" aria-hidden="true"><span></span></div>
+    <div id="splash-status" class="splash-status">טוען…</div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/logo-mark.svg" alt="" class="brand-mark" />
+      <span class="team-number" id="hdr-team"></span>
+      <span class="team-name" id="hdr-team-name"></span>
+    </div>
+    <div class="event" id="hdr-event"></div>
+    <div class="status">
+      <span id="hdr-status" class="status-text" role="status"></span>
+      <button class="icon-btn" id="btn-refresh" title="רענון" aria-label="רענון"></button>
+      <button class="icon-btn" id="btn-settings" title="הגדרות" aria-label="הגדרות"></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel matches-panel" aria-labelledby="matches-title">
+      <h2 id="matches-title">כל המשחקים</h2>
+      <ol id="matches" class="matches"></ol>
+    </section>
+
+    <div class="main-area">
+      <div class="row">
+        <section class="panel partner-panel" aria-labelledby="partner-title">
+          <h2 id="partner-title">ברית משחק הבא <span id="next-label" class="pill"></span></h2>
+          <div id="partner" class="partner"></div>
+        </section>
+        <section class="panel color-panel" id="color-panel" aria-labelledby="color-title">
+          <h2 id="color-title">צבע</h2>
+          <div id="color" class="color-text"></div>
+        </section>
+      </div>
+
+      <div class="row">
+        <section class="panel alerts-panel" aria-labelledby="alerts-title">
+          <h2 id="alerts-title">
+            חירום
+            <button id="btn-alert-all" class="alert-all-btn" disabled>התראה לכולם</button>
+          </h2>
+          <div id="server-status" class="server-status"></div>
+          <ul id="devices" class="devices"></ul>
+        </section>
+        <section class="panel checklist-panel" aria-labelledby="checklist-title">
+          <h2 id="checklist-title">
+            צ'ק ליסט
+            <span id="check-progress" class="check-progress"></span>
+            <button id="btn-reset-checklist" class="text-btn">איפוס</button>
+          </h2>
+          <ul id="checklist" class="checklist"></ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div id="banner" class="banner" role="alert" hidden></div>
+
+  <dialog id="settings" class="settings" aria-labelledby="settings-title">
+    <form id="settings-form" novalidate>
+      <h2 id="settings-title">הגדרות</h2>
+
+      <fieldset>
+        <legend>קבוצה ואירוע</legend>
+        <label>מספר קבוצה
+          <input name="teamNumber" inputmode="numeric" required pattern="[0-9]{1,5}" maxlength="5" />
+          <small class="field-error" data-error-for="teamNumber"></small>
+        </label>
+        <p class="hint">נשמר במחשב הזה, כך שמזינים אותו רק פעם אחת.</p>
+        <label>עונה
+          <input name="season" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" id="season-input" />
+          <small class="field-error" data-error-for="season"></small>
+        </label>
+        <label>קוד אירוע
+          <input name="eventCode" maxlength="20" placeholder="ריק = האירוע הבא של הקבוצה" />
+          <small class="field-error" data-error-for="eventCode"></small>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>תצוגה</legend>
+        <label>רענון כל (שניות)
+          <input name="refreshSeconds" type="number" min="15" max="3600" required />
+          <small class="field-error" data-error-for="refreshSeconds"></small>
+        </label>
+        <label class="inline"><input name="demoMode" type="checkbox" /> מצב הדגמה (נתונים לדוגמה)</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>צ'ק ליסט לפני כל משחק</legend>
+        <label>פריט בכל שורה
+          <textarea name="checklist" rows="7"></textarea>
+          <small class="field-error" data-error-for="checklist"></small>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>כפתור חירום (שרת לטלפונים)</legend>
+        <div class="server-box" id="server-box"></div>
+        <label>פורט
+          <input name="serverPort" type="number" min="1024" max="65535" required />
+          <small class="field-error" data-error-for="serverPort"></small>
+        </label>
+        <label>קוד הצטרפות
+          <input name="joinCode" autocomplete="off" maxlength="32" class="ltr" />
+          <small class="field-error" data-error-for="joinCode"></small>
+        </label>
+        <label>הודעת ההתראה
+          <input name="alertMessage" maxlength="120" />
+          <small class="field-error" data-error-for="alertMessage"></small>
+        </label>
+        <p class="hint">
+          חיבור מכל מקום: ב-VS Code פותחים את לשונית <b>Ports</b>, מוסיפים את הפורט (Forward a Port),
+          ובקליק ימני משנים את Port Visibility ל-<b>Public</b>. את הכתובת שמתקבלת מכניסים באפליקציה בטלפון.
+          ברשת המקומית צריך לאשר את חלון חומת האש של Windows בהפעלה הראשונה.
+        </p>
+      </fieldset>
+
+      <p class="field-error form-error" data-error-for="form"></p>
+      <div class="actions">
+        <button type="submit" class="primary" id="btn-save">שמירה</button>
+        <button type="button" id="btn-cancel">ביטול</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

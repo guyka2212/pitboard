@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <clipPath id="tile"><rect width="400" height="400" rx="88"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="400" height="400" fill="#1D4FBF"/>
+    <polygon points="0,0 250,0 150,400 0,400" fill="#D42B2B"/>
+    <polygon points="250,0 262,0 162,400 150,400" fill="#12151C"/>
+  </g>
+  <polyline points="104,208 174,278 300,128" fill="none" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

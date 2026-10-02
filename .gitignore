@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.claude/
+*.log
+
+# Personal FTC API token. FTC bans tokens that get published.
+ftc-credentials.json

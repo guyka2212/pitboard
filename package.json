@@ -1,0 +1,48 @@
+{
+  "name": "pitboard",
+  "version": "1.0.0",
+  "description": "Pit display for FTC teams: next match, alliance partner, pre-match checklist and pit alerts",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/*.test.js\"",
+    "icon": "electron scripts/build-icon.js",
+    "dist": "npm test && electron-builder --win"
+  },
+  "author": "FTC Team 18833",
+  "type": "commonjs",
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "productName": "PitBoard",
+  "build": {
+    "appId": "org.ftc.pitboard",
+    "productName": "PitBoard",
+    "files": [
+      "src/**/*",
+      "build/icon.ico",
+      "package.json",
+      "ftc-credentials.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    }
+  },
+  "private": true
+}
