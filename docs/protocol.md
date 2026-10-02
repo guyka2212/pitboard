@@ -50,7 +50,43 @@ Sent when the person dismisses the alert. The laptop shows "אישר" and the ti
 ```
 
 `error` codes: `bad_join_code`, `missing_name`, `bad_device_id`, `server_full`. The socket is
-closed right after an error.
+closed right after these. `rate_limited` (see chat) is the exception: the socket stays open.
+
+## Chat
+
+Plain text messages in both directions between the pit laptop and one phone. Text is 1–500
+characters after trimming; line breaks are allowed.
+
+**Laptop → phone**
+
+```json
+{ "type": "chat", "messageId": "uuid", "text": "תביאי את הסוללה הרזרבית", "sentAt": 1791000000000 }
+```
+
+The phone answers right away with `chat-received`, and with `chat-read` once the person has
+actually seen the message (chat screen open). The laptop shows "נמסר" / "נקרא" under it.
+
+```json
+{ "type": "chat-received", "messageId": "uuid" }
+{ "type": "chat-read", "messageIds": ["uuid", "uuid"] }
+```
+
+Messages written while a phone is offline are kept and sent right after its next `welcome`.
+The same `messageId` can arrive twice (for example after a reconnect); show it once.
+
+**Phone → laptop**
+
+```json
+{ "type": "chat", "messageId": "<uuid made on the phone>", "text": "בדרך!" }
+```
+
+The laptop answers `{ "type": "chat-received", "messageId": "…" }`. If that doesn't arrive,
+resend the same message (same `messageId`) after reconnecting; the laptop ignores duplicates.
+More than 10 messages in 10 seconds gets
+`{ "type": "error", "code": "rate_limited", "messageId": "…" }` and that message is dropped.
+
+The laptop keeps chat history in memory only, until the app is closed. The phone should keep its
+own copy.
 
 ## Close codes
 

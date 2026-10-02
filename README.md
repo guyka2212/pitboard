@@ -15,6 +15,17 @@ that rings a team member's phone and calls them back to the pit.
 When only two matches are left before yours, the app shows a full-screen alert with sound. It also
 flashes the taskbar button and sends a Windows notification, once per match.
 
+## Chat
+
+The chat button next to the scout button (and the small chat button next to each phone in the
+emergency panel) opens a conversation with one of the connected phones. Pick the person on the
+side and write.
+- **Delivery:** messages to a phone that's offline wait and go out when it reconnects.
+- **Status:** each sent message shows whether it was delivered and read.
+- **Replies:** phones can answer. Unread replies show as a badge and play a short sound, plus a
+  Windows notification when PitBoard isn't in front.
+- **History:** kept until PitBoard is closed.
+
 ## Scouting
 
 Team stats come from [FTCScout](https://ftcscout.org/api) (GraphQL, no key needed):

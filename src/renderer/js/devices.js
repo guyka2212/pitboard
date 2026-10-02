@@ -37,7 +37,16 @@ function updateAlertAllButton(devices) {
   button.disabled = button.dataset.cooling === 'true' || !devices.some((d) => d.online);
 }
 
-export function renderDevices(state, { onAlert, onRemove }) {
+function chatButton(device, onChat) {
+  return el('button', {
+    class: 'chat-btn has-badge',
+    title: `צ'אט עם ${device.name}`,
+    'aria-label': device.unread ? `צ'אט עם ${device.name}, ${device.unread} חדשות` : `צ'אט עם ${device.name}`,
+    onclick: () => onChat(device.id),
+  }, icon('chat', 16), device.unread > 0 && el('span', { class: 'badge' }, String(device.unread)));
+}
+
+export function renderDevices(state, { onAlert, onRemove, onChat }) {
   const list = $('devices');
   list.replaceChildren();
   updateAlertAllButton(state.devices);
@@ -61,6 +70,7 @@ export function renderDevices(state, { onAlert, onRemove }) {
         el('span', { class: 'dot' }),
         el('span', { class: 'd-name' }, device.name),
         alertState(device),
+        chatButton(device, onChat),
         alertButton,
         !device.online &&
           el('button', { class: 'remove-btn', title: 'הסרה מהרשימה', 'aria-label': 'הסרה', onclick: () => onRemove(device.id) }, icon('close', 16)),

@@ -128,3 +128,80 @@ test('a port that is already taken is reported, not thrown', async (t) => {
   assert.equal(second.status.running, false);
   assert.match(second.status.error, /תפוס/);
 });
+
+test('chat: laptop to phone, receipts, and a reply', async (t) => {
+  const { server, url } = await startServer(t);
+  const p = phone(url, hello('Noa'));
+  await p.next('welcome');
+  const [{ id }] = server.listDevices();
+
+  const sent = server.sendChat(id, '  bring the spare battery  ');
+  assert.equal(sent.text, 'bring the spare battery');
+  const frame = await p.next('chat');
+  assert.equal(frame.text, 'bring the spare battery');
+  assert.equal(frame.messageId, sent.id);
+
+  const read = new Promise((resolve) => server.on('chat', (c) => c.messages[0].readAt && resolve(c)));
+  p.ws.send(JSON.stringify({ type: 'chat-received', messageId: sent.id }));
+  p.ws.send(JSON.stringify({ type: 'chat-read', messageIds: [sent.id] }));
+  const thread = await read;
+  assert.ok(thread.messages[0].deliveredAt);
+
+  const incoming = new Promise((resolve) => server.on('chat-message', resolve));
+  const replyId = crypto.randomUUID();
+  p.ws.send(JSON.stringify({ type: 'chat', messageId: replyId, text: 'on my way' }));
+  const got = await incoming;
+  assert.equal(got.name, 'Noa');
+  assert.equal(got.message.text, 'on my way');
+  assert.equal((await p.next('chat-received')).messageId, replyId);
+  assert.equal(server.listDevices()[0].unread, 1);
+  assert.equal(server.chatThread(id).length, 2);
+  assert.equal(server.listDevices()[0].unread, 0, 'opening the thread marks it seen');
+  p.ws.close();
+});
+
+test('chat: messages to an offline phone are delivered when it reconnects', async (t) => {
+  const { server, url } = await startServer(t);
+  const who = hello('Dan');
+  const first = phone(url, who);
+  await first.next('welcome');
+  first.ws.close();
+  await first.closed;
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  const [{ id, online }] = server.listDevices();
+  assert.equal(online, false);
+  const queued = server.sendChat(id, 'come to the pit when you can');
+  assert.equal(queued.deliveredAt, null);
+
+  const again = phone(url, who);
+  await again.next('welcome');
+  assert.equal((await again.next('chat')).messageId, queued.id);
+  again.ws.close();
+});
+
+test('chat: duplicates, bad input and flooding are handled', async (t) => {
+  const { server, url } = await startServer(t);
+  const p = phone(url, hello('Eve'));
+  await p.next('welcome');
+  const [{ id }] = server.listDevices();
+
+  const messageId = crypto.randomUUID();
+  p.ws.send(JSON.stringify({ type: 'chat', messageId, text: 'hi' }));
+  p.ws.send(JSON.stringify({ type: 'chat', messageId, text: 'hi' }));
+  p.ws.send(JSON.stringify({ type: 'chat', messageId: 'short', text: 'bad id' }));
+  p.ws.send(JSON.stringify({ type: 'chat', messageId: crypto.randomUUID(), text: '   ' }));
+  p.ws.send(JSON.stringify({ type: 'chat', messageId: crypto.randomUUID(), text: 'x'.repeat(501) }));
+  p.ws.send(JSON.stringify({ type: 'chat', messageId: crypto.randomUUID(), text: { not: 'text' } }));
+  for (let i = 0; i < 12; i += 1) p.ws.send(JSON.stringify({ type: 'chat', messageId: crypto.randomUUID(), text: `spam ${i}` }));
+  const limited = await p.next('error');
+  assert.equal(limited.code, 'rate_limited');
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  const texts = server.chatThread(id).map((m) => m.text);
+  assert.equal(texts.filter((x) => x === 'hi').length, 1);
+  assert.ok(texts.length <= 10);
+  assert.equal(server.sendChat(id, ''), null);
+  assert.equal(server.sendChat('nobody-here-123', 'hello'), null);
+  p.ws.close();
+});

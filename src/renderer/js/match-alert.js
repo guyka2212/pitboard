@@ -1,29 +1,12 @@
 import { $, el } from './dom.js';
 import { COLOR_NAME } from './format.js';
+import { alarm } from './sound.js';
 
 const RING_FOR_MS = 30000;
 const BEEP_EVERY_MS = 1600;
 
-let audio = null;
 let beepTimer = null;
 let stopTimer = null;
-
-function beep() {
-  audio = audio || new AudioContext();
-  const now = audio.currentTime;
-  // three rising tones, loud enough to hear over a noisy pit
-  [660, 880, 1100].forEach((frequency, i) => {
-    const osc = audio.createOscillator();
-    const gain = audio.createGain();
-    osc.type = 'square';
-    osc.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.25, now + i * 0.18);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.16);
-    osc.connect(gain).connect(audio.destination);
-    osc.start(now + i * 0.18);
-    osc.stop(now + i * 0.18 + 0.17);
-  });
-}
 
 function stopRinging() {
   clearInterval(beepTimer);
@@ -47,8 +30,8 @@ export function showMatchAlert({ match, title }) {
 
   if (!dialog.open) dialog.showModal();
   stopRinging();
-  beep();
-  beepTimer = setInterval(beep, BEEP_EVERY_MS);
+  alarm();
+  beepTimer = setInterval(alarm, BEEP_EVERY_MS);
   stopTimer = setTimeout(stopRinging, RING_FOR_MS);
 }
 

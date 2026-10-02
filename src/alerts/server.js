@@ -3,10 +3,14 @@ const http = require('http');
 const crypto = require('crypto');
 const { EventEmitter } = require('events');
 const { WebSocketServer } = require('ws');
+const { ChatStore } = require('./chat');
 
 const HEARTBEAT_MS = 20000;
 const HELLO_TIMEOUT_MS = 10000;
 const MAX_DEVICES = 50;
+const CHAT_BURST = 10;
+const CHAT_WINDOW_MS = 10000;
+const isMessageId = (v) => typeof v === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(v);
 
 const CLOSE = {
   HELLO_TIMEOUT: 4000,
@@ -46,6 +50,7 @@ class AlertServer extends EventEmitter {
     this.status = { running: false, port: null, error: null };
     this.joinCode = '';
     this.teamNumber = '';
+    this.chat = new ChatStore();
   }
 
   configure({ joinCode, teamNumber }) {
@@ -147,6 +152,12 @@ class AlertServer extends EventEmitter {
         deviceId = this.handleHello(ws, msg);
       } else if (msg.type === 'ack') {
         this.handleAck(deviceId, msg);
+      } else if (msg.type === 'chat') {
+        this.handleChat(ws, deviceId, msg);
+      } else if (msg.type === 'chat-received' && isMessageId(msg.messageId)) {
+        if (this.chat.markDelivered(deviceId, msg.messageId)) this.emitChat(deviceId);
+      } else if (msg.type === 'chat-read' && Array.isArray(msg.messageIds)) {
+        if (this.chat.markRead(deviceId, msg.messageIds.filter(isMessageId).slice(0, 200))) this.emitChat(deviceId);
       }
     });
 
@@ -187,8 +198,10 @@ class AlertServer extends EventEmitter {
     }
     if (existing && existing.ws && existing.ws !== ws) existing.ws.close(CLOSE.REPLACED, 'replaced');
 
-    this.devices.set(id, { id, name, ws, online: true, lastAlert: existing ? existing.lastAlert : null });
+    this.devices.set(id, { id, name, ws, online: true, lastAlert: existing ? existing.lastAlert : null, chatTimes: [] });
     send(ws, { type: 'welcome', deviceId: id, teamNumber: this.teamNumber });
+    // Messages written while the phone was away.
+    for (const message of this.chat.undelivered(id)) send(ws, this.chatFrame(message));
     this.emitDevices();
     return id;
   }
@@ -199,6 +212,52 @@ class AlertServer extends EventEmitter {
       device.lastAlert.ackAt = Date.now();
       this.emitDevices();
     }
+  }
+
+  handleChat(ws, deviceId, msg) {
+    const device = this.devices.get(deviceId);
+    if (!isMessageId(msg.messageId) || typeof msg.text !== 'string') return;
+
+    const now = Date.now();
+    device.chatTimes = device.chatTimes.filter((t) => now - t < CHAT_WINDOW_MS);
+    if (device.chatTimes.length >= CHAT_BURST) {
+      send(ws, { type: 'error', code: 'rate_limited', message: 'יותר מדי הודעות, נסו שוב בעוד רגע', messageId: msg.messageId });
+      return;
+    }
+    device.chatTimes.push(now);
+
+    const message = this.chat.addIncoming(deviceId, msg.messageId, msg.text);
+    // Acknowledge duplicates too, so a phone that resent after a reconnect stops retrying.
+    send(ws, { type: 'chat-received', messageId: msg.messageId });
+    if (!message) return;
+    this.emit('chat-message', { deviceId, name: device.name, message });
+    this.emitChat(deviceId);
+  }
+
+  chatFrame(message) {
+    return { type: 'chat', messageId: message.id, text: message.text, sentAt: message.sentAt };
+  }
+
+  /** Sends a message to one phone; it waits in the thread if the phone is offline. */
+  sendChat(deviceId, text) {
+    const device = this.devices.get(deviceId);
+    if (!device) return null;
+    const message = this.chat.addOutgoing(deviceId, text);
+    if (!message) return null;
+    if (device.online) send(device.ws, this.chatFrame(message));
+    this.emitChat(deviceId);
+    return message;
+  }
+
+  chatThread(deviceId) {
+    if (!this.devices.has(deviceId)) return null;
+    if (this.chat.markSeen(deviceId)) this.emitDevices();
+    return this.chat.messages(deviceId);
+  }
+
+  emitChat(deviceId) {
+    this.emit('chat', { deviceId, messages: this.chat.messages(deviceId) });
+    this.emitDevices();
   }
 
   alert(deviceId, message) {
@@ -222,6 +281,7 @@ class AlertServer extends EventEmitter {
     const device = this.devices.get(deviceId);
     if (!device) return false;
     this.devices.delete(deviceId);
+    this.chat.remove(deviceId);
     if (device.ws) device.ws.close(CLOSE.REMOVED, 'removed');
     this.emitDevices();
     return true;
@@ -229,7 +289,13 @@ class AlertServer extends EventEmitter {
 
   listDevices() {
     return [...this.devices.values()]
-      .map(({ id, name, online, lastAlert }) => ({ id, name, online, lastAlert: lastAlert && { ...lastAlert } }))
+      .map(({ id, name, online, lastAlert }) => ({
+        id,
+        name,
+        online,
+        lastAlert: lastAlert && { ...lastAlert },
+        unread: this.chat.unread(id),
+      }))
       .sort((a, b) => Number(b.online) - Number(a.online) || a.name.localeCompare(b.name, 'he'));
   }
 

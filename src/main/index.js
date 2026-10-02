@@ -84,6 +84,21 @@ async function start() {
 
   alertServer.on('devices', (devices) => send('devices', devices));
   alertServer.on('status', (status) => send('server-status', status));
+  alertServer.on('chat', (thread) => send('chat', thread));
+  alertServer.on('chat-message', ({ deviceId, name, message }) => {
+    send('chat-message', { deviceId, name, text: message.text });
+    if (!win || win.isDestroyed() || win.isFocused()) return;
+    win.flashFrame(true);
+    if (Notification.isSupported()) {
+      const notification = new Notification({ title: `הודעה מ${name}`, body: message.text, icon: ICON });
+      notification.on('click', () => {
+        if (win.isMinimized()) win.restore();
+        win.focus();
+        send('open-chat', deviceId);
+      });
+      notification.show();
+    }
+  });
   dashboard.on('dashboard', (snapshot) => {
     send('dashboard', snapshot);
     const soon = snapshot.status === 'ok' && matchAlert.check(snapshot.data);

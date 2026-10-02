@@ -9,6 +9,8 @@ import { hideSplash, setSplashStatus } from './splash.js';
 import { initScoutDialog, openScout } from './scout-dialog.js';
 import { initTeamDialog, openTeam } from './team-dialog.js';
 import { initMatchAlert, showMatchAlert } from './match-alert.js';
+import { chatDevicesChanged, chatUpdated, initChatDialog, isViewing, openChat, renderChatBadge } from './chat-dialog.js';
+import { chime } from './sound.js';
 
 const { hub } = window;
 
@@ -22,7 +24,11 @@ const state = {
   addresses: [],
 };
 
-const deviceActions = { onAlert: (id) => hub.sendAlert(id), onRemove: (id) => hub.removeDevice(id) };
+const deviceActions = {
+  onAlert: (id) => hub.sendAlert(id),
+  onRemove: (id) => hub.removeDevice(id),
+  onChat: (id) => openChat(state, id),
+};
 const checklistActions = { onToggle: (id, checked) => hub.toggleCheck(id, checked) };
 
 function renderDashboard() {
@@ -36,6 +42,7 @@ function renderAll() {
   renderDashboard();
   renderChecklist(state, checklistActions);
   renderDevices(state, deviceActions);
+  renderChatBadge(state);
 }
 
 let promptedForSettings = false;
@@ -58,9 +65,11 @@ function afterDashboardUpdate() {
 function wireControls() {
   $('btn-refresh').append(icon('refresh'));
   $('btn-scout').append(icon('scout'));
+  $('btn-chat').prepend(icon('chat'));
   $('btn-settings').append(icon('settings'));
   $('btn-refresh').addEventListener('click', () => hub.refresh());
   $('btn-scout').addEventListener('click', () => openScout(state));
+  $('btn-chat').addEventListener('click', () => openChat(state));
   $('btn-settings').addEventListener('click', () => openSettings(state));
 
   // Team numbers are rendered as [data-team] buttons all over the window.
@@ -81,6 +90,7 @@ function wireControls() {
   initScoutDialog();
   initTeamDialog();
   initMatchAlert();
+  initChatDialog(state);
 }
 
 // Subscribe before asking for the initial state so no update is missed in between;
@@ -99,8 +109,15 @@ function subscribe() {
   });
   hub.onDevices((devices) => {
     state.devices = devices;
-    if (ready()) renderDevices(state, deviceActions);
+    if (!ready()) return;
+    renderDevices(state, deviceActions);
+    chatDevicesChanged(state);
   });
+  hub.onChat((thread) => chatUpdated(state, thread));
+  hub.onChatMessage(({ deviceId }) => {
+    if (!isViewing(deviceId)) chime();
+  });
+  hub.onOpenChat((deviceId) => openChat(state, deviceId));
   hub.onServerStatus((serverStatus) => {
     state.serverStatus = serverStatus;
     if (!ready()) return;

@@ -22,6 +22,8 @@ const ICONS = {
   check: ['M20 6 9 17l-5-5'],
   scout: ['M3 3v18h18', 'M8 17v-5', 'M13 17V8', 'M18 17v-8'],
   sort: ['M8 9l4-4 4 4', 'M16 15l-4 4-4-4'],
+  chat: ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+  send: ['M22 2 11 13', 'M22 2l-7 20-4-9-9-4z'],
 };
 
 /** A team number that opens the team card when clicked (see main.js). */

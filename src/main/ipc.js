@@ -4,6 +4,7 @@ const { seasonForDate } = require('../ftc/schedule');
 const checklist = require('./checklist');
 const { localIPv4Addresses } = require('./network');
 const scout = require('../scout/service');
+const { MAX_TEXT: MAX_CHAT_TEXT } = require('../alerts/chat');
 
 const ALERT_COOLDOWN_MS = 1500;
 const DATA_FIELDS = ['teamNumber', 'season', 'eventCode', 'demoMode'];
@@ -85,6 +86,16 @@ function registerIpc({ state, store, alertServer, dashboard }) {
   handle('send-alert-all', () => alertServer.alertAll(state.settings.alertMessage));
 
   handle('remove-device', (deviceId) => isId(deviceId) && alertServer.removeDevice(deviceId));
+
+  handle('chat-thread', (deviceId) => (isId(deviceId) ? alertServer.chatThread(deviceId) : null));
+
+  handle('chat-send', (deviceId, text) => {
+    if (!isId(deviceId)) return { ok: false, error: 'לא נבחר נמען' };
+    if (typeof text !== 'string' || !text.trim()) return { ok: false, error: 'ההודעה ריקה' };
+    if (text.length > MAX_CHAT_TEXT) return { ok: false, error: `עד ${MAX_CHAT_TEXT} תווים` };
+    const message = alertServer.sendChat(deviceId, text);
+    return message ? { ok: true, message } : { ok: false, error: 'הטלפון הוסר מהרשימה' };
+  });
 
   handle('copy-text', (text) => {
     if (typeof text === 'string' && text.length <= 200) clipboard.writeText(text);
