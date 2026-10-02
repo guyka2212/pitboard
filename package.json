@@ -20,7 +20,7 @@
   },
   "productName": "PitBoard",
   "build": {
-    "appId": "org.ftc.pitboard",
+    "appId": "app.pitboard.desktop",
     "productName": "PitBoard",
     "files": [
       "src/**/*",
@@ -42,7 +42,10 @@
     "directories": {
       "output": "dist",
       "buildResources": "build"
-    }
+    },
+    "asarUnpack": [
+      "build/icon.ico"
+    ]
   },
   "private": true
 }

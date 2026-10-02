@@ -7,7 +7,11 @@ const { registerIpc } = require('./ipc');
 const checklist = require('./checklist');
 const { MatchAlert, describe } = require('./match-alert');
 
-const ICON = path.join(__dirname, '..', '..', 'build', 'icon.ico');
+// Must match build.appId in package.json. Windows ties the taskbar icon to this id and caches it,
+// so runs from source (which are electron.exe, with Electron's icon) use their own id.
+const APP_ID = app.isPackaged ? 'app.pitboard.desktop' : 'app.pitboard.desktop.dev';
+// Unpacked from the asar in builds (see build.asarUnpack), since the Windows shell can't read inside it.
+const ICON = path.join(__dirname, '..', '..', 'build', 'icon.ico').replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
 
 const state = { settings: null, checklistState: null };
 const alertServer = new AlertServer();
@@ -130,7 +134,7 @@ if (!app.requestSingleInstanceLock()) {
     dashboard.stop();
     alertServer.stop();
   });
-  // Windows only shows toast notifications for apps with an id; it must match build.appId.
-  app.setAppUserModelId('org.ftc.pitboard');
+  // Windows only shows toast notifications for apps with an id.
+  app.setAppUserModelId(APP_ID);
   app.whenReady().then(start);
 }
