@@ -1,4 +1,4 @@
-import { $, el } from './dom.js';
+import { $, el, teamLink } from './dom.js';
 import { COLOR_NAME, matchTime } from './format.js';
 
 function emptyMessage(dashboard) {
@@ -12,14 +12,25 @@ function emptyMessage(dashboard) {
   return null;
 }
 
+function countdownText(match, onField) {
+  if (!Number.isInteger(match.matchesBefore)) return '';
+  const field = onField ? ` · על המגרש: ${onField}` : '';
+  if (match.matchesBefore === 0) return `הבא בתור${field}`;
+  if (match.matchesBefore === 1) return `עוד משחק אחד${field}`;
+  return `עוד ${match.matchesBefore} משחקים${field}`;
+}
+
 export function renderNextMatch({ dashboard }) {
   const partner = $('partner');
   const colorPanel = $('color-panel');
   const color = $('color');
+  const countdown = $('next-countdown');
   partner.replaceChildren();
   colorPanel.classList.remove('red', 'blue');
   color.replaceChildren('—');
   $('next-label').textContent = '';
+  countdown.textContent = '';
+  countdown.classList.remove('soon');
 
   const message = emptyMessage(dashboard);
   if (message !== null) {
@@ -29,20 +40,26 @@ export function renderNextMatch({ dashboard }) {
 
   const match = dashboard.data.nextMatch;
   $('next-label').textContent = match.label;
+  countdown.textContent = countdownText(match, dashboard.data.onField);
+  countdown.classList.toggle('soon', match.matchesBefore <= 2);
   colorPanel.classList.add(match.alliance);
   color.replaceChildren(COLOR_NAME[match.alliance], el('small', {}, match.station));
 
-  if (!match.partners.length) {
-    partner.append(el('div', { class: 'empty' }, 'אין שותף ברית במשחק הזה'));
-    return;
-  }
-  for (const team of match.partners) {
-    partner.append(
-      el('div', { class: 'partner-team' },
-        el('div', { class: 'p-number' }, team.display),
-        el('div', { class: 'p-name' }, team.name || '—'),
-        match.startTime && el('div', { class: 'p-time' }, `משחק ${match.label} · ${matchTime(match.startTime)}`),
+  const partners = match.partners.length
+    ? match.partners.map((team) =>
+        el('div', { class: 'partner-team' },
+          el('div', { class: 'p-number' }, teamLink(team)),
+          el('div', { class: 'p-name' }, team.name || '—'),
+        ))
+    : [el('div', { class: 'empty' }, 'אין שותף ברית במשחק הזה')];
+
+  partner.append(
+    el('div', { class: 'partner-teams' }, partners),
+    match.opponents.length > 0 &&
+      el('div', { class: `versus ${match.alliance === 'red' ? 'blue' : 'red'}` },
+        el('span', { class: 'versus-label' }, 'נגד'),
+        match.opponents.map((team) => el('span', { class: 'versus-team' }, teamLink(team), el('small', {}, team.name))),
       ),
-    );
-  }
+    match.startTime && el('div', { class: 'p-time' }, `משחק ${match.label} · ${matchTime(match.startTime)}`),
+  );
 }

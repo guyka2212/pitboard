@@ -3,6 +3,7 @@ const { validate } = require('../settings/schema');
 const { seasonForDate } = require('../ftc/schedule');
 const checklist = require('./checklist');
 const { localIPv4Addresses } = require('./network');
+const scout = require('../scout/service');
 
 const ALERT_COOLDOWN_MS = 1500;
 const DATA_FIELDS = ['teamNumber', 'season', 'eventCode', 'demoMode'];
@@ -90,6 +91,37 @@ function registerIpc({ state, store, alertServer, dashboard }) {
   });
 
   handle('get-addresses', localIPv4Addresses);
+
+  // Scout calls answer { ok, ... } instead of throwing: Electron would prefix thrown
+  // messages with its own text, and the window shows these errors as they are.
+  function scoutContext() {
+    const data = dashboard.state.data;
+    if (state.settings.demoMode) return { error: 'סקאוטינג לא זמין במצב הדגמה' };
+    return { data, season: (data && data.season) || Number(state.settings.season) || seasonForDate() };
+  }
+
+  handle('scout-event', async () => {
+    const { error, data, season } = scoutContext();
+    if (error) return { ok: false, error };
+    if (!data || !data.event) return { ok: false, error: 'אין עדיין אירוע לקבוצה, אז אין מה לסקאוט' };
+    try {
+      const table = await scout.eventTable({ season, eventCode: data.event.code, teams: data.eventTeams || [] });
+      return { ok: true, event: data.event, table };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  });
+
+  handle('scout-team', async (number) => {
+    const { error, data, season } = scoutContext();
+    if (error) return { ok: false, error };
+    try {
+      const card = await scout.teamCard({ number, season, eventCode: data && data.event && data.event.code });
+      return { ok: true, card };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  });
 }
 
 module.exports = { registerIpc };

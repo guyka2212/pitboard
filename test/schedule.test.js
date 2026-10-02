@@ -103,3 +103,39 @@ test('season follows the September kickoff', () => {
   assert.equal(seasonForDate(new Date(2026, 8, 1)), 2026);
   assert.equal(seasonForDate(new Date(2027, 2, 1)), 2026);
 });
+
+function qual(n, teams, started) {
+  return {
+    tournamentLevel: 'QUALIFICATION',
+    series: 0,
+    matchNumber: n,
+    description: `Qualification ${n}`,
+    actualStartTime: started ? 'x' : null,
+    postResultTime: null,
+    scoreRedFinal: null,
+    scoreBlueFinal: null,
+    teams: teams.map((teamNumber, i) => ({ teamNumber, station: ['Red1', 'Red2', 'Blue1', 'Blue2'][i] })),
+  };
+}
+
+test('counts how many matches still start before ours', () => {
+  const others = [1, 2, 3, 4];
+  const ours = [18833, 5, 6, 7];
+  const schedule = [qual(1, others, true), qual(2, others, true), qual(3, others, false), qual(4, others, false), qual(5, ours, false)];
+  const { nextMatch, onField } = buildMatches(schedule, 18833, {});
+  assert.equal(nextMatch.label, 'Q5');
+  assert.equal(nextMatch.matchesBefore, 2);
+  assert.equal(onField, 'Q2');
+});
+
+test('before the event starts, every earlier match counts', () => {
+  const schedule = [qual(1, [1, 2, 3, 4], false), qual(2, [18833, 5, 6, 7], false)];
+  const { nextMatch, onField } = buildMatches(schedule, 18833, {});
+  assert.equal(nextMatch.matchesBefore, 1);
+  assert.equal(onField, null);
+});
+
+test('our match is next in line when the one before it is on the field', () => {
+  const schedule = [qual(1, [1, 2, 3, 4], true), qual(2, [18833, 5, 6, 7], false)];
+  assert.equal(buildMatches(schedule, 18833, {}).nextMatch.matchesBefore, 0);
+});

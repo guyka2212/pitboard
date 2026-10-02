@@ -7,10 +7,29 @@ that rings a team member's phone and calls them back to the pit.
 | Area                   | Shows |
 |------------------------|-------|
 | **צבע**                | Alliance color and station for the next match |
-| **ברית משחק הבא**      | Alliance partner for the next match: number, name, time |
-| **כל המשחקים**         | All of your matches at the event: partner, color, result. The next one is highlighted |
+| **ברית משחק הבא**      | Alliance partner and opponents for the next match, and how many matches are left before it |
+| **כל המשחקים**         | All of your matches at the event: partner, opponents, color, result. The next one is highlighted |
 | **צ'ק ליסט**           | Pre-match checklist. It clears itself whenever the next match changes |
 | **חירום**              | Phones connected through the phone app, each with an alert button |
+
+When only two matches are left before yours, the app shows a full-screen alert with sound. It also
+flashes the taskbar button and sends a Windows notification, once per match.
+
+## Scouting
+
+Team stats come from [FTCScout](https://ftcscout.org/api) (GraphQL, no key needed):
+
+- **Any team number** in the window can be clicked. It shows that team's np OPR, Auto OPR,
+  Teleop OPR, np AVG and ranking, both at the current event and for the season. It also shows
+  their match history for the season, grouped by event.
+- **The scout button** (chart icon, next to refresh) opens a table of every team at the event.
+  - Sort it by ranking, np OPR, Auto OPR, Teleop OPR or np AVG.
+  - Switch between stats from this event and season stats.
+  - In season mode, the ranking is the team's world rank by np OPR.
+
+FTCScout adds each new game a while after the season starts. Until then the app shows the latest
+season FTCScout has and says so. The team list always comes from the FTC API, so the table works
+even for events FTCScout hasn't picked up yet.
 
 ## Running
 
@@ -70,6 +89,7 @@ its visibility to Public. The protocol is in [docs/protocol.md](docs/protocol.md
 ```
 src/main/        Electron main process: window, IPC, refresh loop, checklist rules
 src/ftc/         FTC Events API client and schedule parsing
+src/scout/       FTCScout client, season detection and stats shaping
 src/alerts/      WebSocket server for the phones
 src/settings/    Settings validation and storage
 src/renderer/    The window (Hebrew, RTL), split into one module per panel

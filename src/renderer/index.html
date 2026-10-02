@@ -30,6 +30,7 @@
     <div class="status">
       <span id="hdr-status" class="status-text" role="status"></span>
       <button class="icon-btn" id="btn-refresh" title="רענון" aria-label="רענון"></button>
+      <button class="icon-btn" id="btn-scout" title="סקאוטינג" aria-label="סקאוטינג"></button>
       <button class="icon-btn" id="btn-settings" title="הגדרות" aria-label="הגדרות"></button>
     </div>
   </header>
@@ -43,7 +44,7 @@
     <div class="main-area">
       <div class="row">
         <section class="panel partner-panel" aria-labelledby="partner-title">
-          <h2 id="partner-title">ברית משחק הבא <span id="next-label" class="pill"></span></h2>
+          <h2 id="partner-title">ברית משחק הבא <span id="next-countdown" class="countdown"></span><span id="next-label" class="pill"></span></h2>
           <div id="partner" class="partner"></div>
         </section>
         <section class="panel color-panel" id="color-panel" aria-labelledby="color-title">
@@ -74,6 +75,46 @@
   </main>
 
   <div id="banner" class="banner" role="alert" hidden></div>
+
+  <dialog id="scout" class="scout" aria-labelledby="scout-title">
+    <header class="dialog-head">
+      <img src="assets/logo-mark.svg" alt="" class="dialog-mark" />
+      <div class="dialog-titles">
+        <h2 id="scout-title">סקאוטינג</h2>
+        <div id="scout-sub" class="dialog-sub"></div>
+      </div>
+      <div id="scout-modes" class="segmented" role="group" aria-label="מקור הנתונים">
+        <button type="button" data-mode="event">באירוע</button>
+        <button type="button" data-mode="season">עונה</button>
+      </div>
+      <button type="button" class="icon-btn" id="scout-close" aria-label="סגירה"></button>
+    </header>
+    <p id="scout-note" class="hint scout-note"></p>
+    <div class="table-wrap">
+      <table class="scout-table">
+        <thead id="scout-head"></thead>
+        <tbody id="scout-body"></tbody>
+      </table>
+    </div>
+    <p class="hint dialog-foot">לחיצה על מספר קבוצה מציגה את הנתונים והיסטוריית המשחקים שלה · נתונים מ-FTCScout</p>
+  </dialog>
+
+  <dialog id="team-card" class="team-card" aria-labelledby="team-title">
+    <header class="dialog-head">
+      <img src="assets/logo-mark.svg" alt="" class="dialog-mark" />
+      <div class="dialog-titles">
+        <h2 id="team-title"></h2>
+        <div id="team-sub" class="dialog-sub"></div>
+      </div>
+      <button type="button" class="icon-btn" id="team-close" aria-label="סגירה"></button>
+    </header>
+    <div id="team-body" class="team-body"></div>
+  </dialog>
+
+  <dialog id="match-alert" class="match-alert" aria-labelledby="ma-content">
+    <div id="ma-content"></div>
+    <button type="button" id="ma-dismiss" class="ma-dismiss">הבנתי</button>
+  </dialog>
 
   <dialog id="settings" class="settings" aria-labelledby="settings-title">
     <form id="settings-form" novalidate>

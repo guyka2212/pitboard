@@ -27,6 +27,9 @@ function matchLabel(m, level) {
   return `P${m.series || m.matchNumber}`;
 }
 
+// A match that has started is no longer "next", even before its result is posted.
+const hasStarted = (m) => Boolean(m.actualStartTime || m.postResultTime);
+
 function toTeam(t, names) {
   return {
     number: t.teamNumber,
@@ -61,16 +64,39 @@ function toMatch(m, teamNumber, names = {}) {
     alliance,
     partners: teams.filter((t) => t.station.startsWith(side) && t.teamNumber !== teamNumber).map((t) => toTeam(t, names)),
     opponents: teams.filter((t) => !t.station.startsWith(side)).map((t) => toTeam(t, names)),
-    // A match that has started is no longer "next", even before its result is posted.
-    started: Boolean(m.actualStartTime || m.postResultTime),
+    started: hasStarted(m),
     score: hasScore ? { ours, theirs } : null,
     outcome,
   };
 }
 
+/**
+ * `schedule` is the whole event in playing order (quals, then playoffs).
+ * For the next match it adds `matchesBefore`: how many matches still have to start before ours.
+ */
 function buildMatches(schedule, teamNumber, names) {
-  const matches = schedule.map((m) => toMatch(m, teamNumber, names)).filter(Boolean);
-  return { matches, nextMatch: matches.find((m) => !m.started) || null };
+  let lastStarted = -1;
+  schedule.forEach((m, i) => {
+    if (hasStarted(m)) lastStarted = i;
+  });
+
+  const matches = [];
+  let nextMatch = null;
+  schedule.forEach((m, i) => {
+    const match = toMatch(m, teamNumber, names);
+    if (!match) return;
+    matches.push(match);
+    if (!nextMatch && !match.started) {
+      nextMatch = { ...match, matchesBefore: Math.max(0, i - lastStarted - 1) };
+    }
+  });
+
+  const onField = lastStarted >= 0 ? schedule[lastStarted] : null;
+  return {
+    matches,
+    nextMatch,
+    onField: onField ? matchLabel(onField, /^qual/i.test(onField.tournamentLevel || '') ? 'qual' : 'playoff') : null,
+  };
 }
 
 module.exports = { seasonForDate, localDateString, pickEvent, matchLabel, toMatch, buildMatches };

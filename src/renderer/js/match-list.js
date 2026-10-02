@@ -1,4 +1,4 @@
-import { $, el } from './dom.js';
+import { $, el, teamLink } from './dom.js';
 import { COLOR_NAME, OUTCOME_NAME, matchTime } from './format.js';
 
 let scrolledToKey = null;
@@ -15,6 +15,15 @@ function resultCell(match, isNext) {
   return el('div', { class: 'm-result' }, match.started ? 'משוחק' : COLOR_NAME[match.alliance]);
 }
 
+function teamsLine(label, teams, className) {
+  return el('div', { class: `m-teams ${className}` },
+    el('span', { class: 'm-teams-label' }, label),
+    teams.length
+      ? teams.map((t) => el('span', { class: 'm-team', title: t.name }, teamLink(t), t.name && el('small', {}, t.name)))
+      : el('span', { class: 'm-team' }, '—'),
+  );
+}
+
 export function renderMatchList({ dashboard }) {
   const list = $('matches');
   list.replaceChildren();
@@ -28,11 +37,13 @@ export function renderMatchList({ dashboard }) {
   let nextRow = null;
   for (const match of data.matches) {
     const isNext = match.key === nextKey;
-    const partners = match.partners.length ? match.partners : [{ display: '—', name: '' }];
     const row = el('li', { class: ['match', match.alliance, match.started && 'started', isNext && 'next'].filter(Boolean).join(' ') },
       el('span', { class: 'bar', title: COLOR_NAME[match.alliance] }),
       el('div', { class: 'm-label', title: match.description }, match.label, el('span', { class: 'm-time' }, matchTime(match.startTime))),
-      el('div', { class: 'm-partner' }, partners.map((p) => [el('b', {}, p.display), el('span', {}, p.name)])),
+      el('div', { class: 'm-sides' },
+        teamsLine('עם', match.partners, 'with'),
+        teamsLine('נגד', match.opponents, 'against'),
+      ),
       resultCell(match, isNext),
     );
     if (isNext) nextRow = row;

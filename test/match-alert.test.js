@@ -1,0 +1,37 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { MatchAlert, describe } = require('../src/main/match-alert');
+
+const data = (matchesBefore, key = 'qual-0-14') => ({
+  teamNumber: 18833,
+  event: { code: 'ILCMP' },
+  nextMatch: {
+    key,
+    label: 'Q14',
+    alliance: 'red',
+    station: 'Red1',
+    matchesBefore,
+    partners: [{ display: '22222' }],
+    opponents: [{ display: '88888' }, { display: '99999' }],
+  },
+});
+
+test('alerts once when our match is two away, not before', () => {
+  const alert = new MatchAlert();
+  assert.equal(alert.check(data(3)), null);
+  assert.equal(alert.check(data(2)).label, 'Q14');
+  assert.equal(alert.check(data(1)), null, 'same match is announced only once');
+  assert.equal(alert.check(data(2, 'qual-0-21')).key, 'qual-0-21');
+});
+
+test('ignores missing data', () => {
+  const alert = new MatchAlert();
+  assert.equal(alert.check(null), null);
+  assert.equal(alert.check({ nextMatch: null }), null);
+  assert.equal(alert.check({ nextMatch: { key: 'x' } }), null);
+});
+
+test('notification text', () => {
+  assert.deepEqual(describe(data(2).nextMatch), { title: 'עוד 2 משחקים למשחק שלנו', body: 'Q14 · אדום · עם 22222' });
+  assert.equal(describe(data(0).nextMatch).title, 'המשחק שלנו הבא בתור!');
+});

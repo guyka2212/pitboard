@@ -1,10 +1,13 @@
 const path = require('path');
-const { app, BrowserWindow, Menu, session } = require('electron');
+const { app, BrowserWindow, Menu, Notification, session } = require('electron');
 const store = require('../settings/store');
 const { AlertServer } = require('../alerts/server');
 const { DashboardService } = require('./dashboard-service');
 const { registerIpc } = require('./ipc');
 const checklist = require('./checklist');
+const { MatchAlert, describe } = require('./match-alert');
+
+const ICON = path.join(__dirname, '..', '..', 'build', 'icon.ico');
 
 const state = { settings: null, checklistState: null };
 const alertServer = new AlertServer();
@@ -12,10 +15,29 @@ const dashboard = new DashboardService({
   getSettings: () => state.settings,
   getCredentials: store.credentials,
 });
+const matchAlert = new MatchAlert();
 let win = null;
 
 function send(channel, payload) {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
+}
+
+// The window may be minimized or behind other windows in the pit, so use every channel we have.
+function announceMatch(match) {
+  const text = describe(match);
+  // On start-up the first data can arrive before the page is listening.
+  if (win && win.webContents.isLoading()) win.webContents.once('did-finish-load', () => send('match-soon', { match, ...text }));
+  else send('match-soon', { match, ...text });
+  if (win && !win.isDestroyed() && !win.isFocused()) win.flashFrame(true);
+  if (Notification.isSupported()) {
+    const notification = new Notification({ title: text.title, body: text.body, icon: ICON, urgency: 'critical' });
+    notification.on('click', () => {
+      if (!win) return;
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    });
+    notification.show();
+  }
 }
 
 function createWindow() {
@@ -28,14 +50,17 @@ function createWindow() {
     // same color as the loading screen, so nothing flashes before the page paints
     backgroundColor: '#12151C',
     title: 'PitBoard',
-    icon: path.join(__dirname, '..', '..', 'build', 'icon.ico'),
+    icon: ICON,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // the match alert has to make sound even if nobody has clicked the window yet
+      autoplayPolicy: 'no-user-gesture-required',
     },
   });
+  win.on('focus', () => win.flashFrame(false));
 
   win.once('ready-to-show', () => win.show());
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -59,7 +84,11 @@ async function start() {
 
   alertServer.on('devices', (devices) => send('devices', devices));
   alertServer.on('status', (status) => send('server-status', status));
-  dashboard.on('dashboard', (snapshot) => send('dashboard', snapshot));
+  dashboard.on('dashboard', (snapshot) => {
+    send('dashboard', snapshot);
+    const soon = snapshot.status === 'ok' && matchAlert.check(snapshot.data);
+    if (soon) announceMatch(soon);
+  });
   dashboard.on('next-match', (key) => {
     const next = checklist.forNextMatch(state.checklistState, key);
     if (next === state.checklistState) return;
@@ -86,5 +115,7 @@ if (!app.requestSingleInstanceLock()) {
     dashboard.stop();
     alertServer.stop();
   });
+  // Windows only shows toast notifications for apps with an id; it must match build.appId.
+  app.setAppUserModelId('org.ftc.pitboard');
   app.whenReady().then(start);
 }

@@ -6,6 +6,9 @@ import { renderChecklist } from './checklist.js';
 import { renderDevices, renderServerStatus, cooldown } from './devices.js';
 import { initSettingsDialog, openSettings, renderServerBox } from './settings-dialog.js';
 import { hideSplash, setSplashStatus } from './splash.js';
+import { initScoutDialog, openScout } from './scout-dialog.js';
+import { initTeamDialog, openTeam } from './team-dialog.js';
+import { initMatchAlert, showMatchAlert } from './match-alert.js';
 
 const { hub } = window;
 
@@ -54,9 +57,18 @@ function afterDashboardUpdate() {
 
 function wireControls() {
   $('btn-refresh').append(icon('refresh'));
+  $('btn-scout').append(icon('scout'));
   $('btn-settings').append(icon('settings'));
   $('btn-refresh').addEventListener('click', () => hub.refresh());
+  $('btn-scout').addEventListener('click', () => openScout(state));
   $('btn-settings').addEventListener('click', () => openSettings(state));
+
+  // Team numbers are rendered as [data-team] buttons all over the window.
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('[data-team]');
+    const number = link && Number(link.dataset.team);
+    if (Number.isInteger(number) && number > 0) openTeam(number);
+  });
   $('btn-alert-all').addEventListener('click', () => {
     cooldown($('btn-alert-all'), () => renderDevices(state, deviceActions));
     hub.sendAlertAll();
@@ -66,6 +78,9 @@ function wireControls() {
     renderChecklist(state, checklistActions);
   });
   initSettingsDialog(state, { onSaved: renderAll });
+  initScoutDialog();
+  initTeamDialog();
+  initMatchAlert();
 }
 
 // Subscribe before asking for the initial state so no update is missed in between;
@@ -92,6 +107,8 @@ function subscribe() {
     renderServerStatus(state);
     renderServerBox(state);
   });
+  // Only sent after good data arrived, so the loading screen is on its way out anyway.
+  hub.onMatchSoon((payload) => hideSplash().then(() => showMatchAlert(payload)));
 }
 
 async function init() {

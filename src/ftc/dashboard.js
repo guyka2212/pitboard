@@ -32,6 +32,17 @@ async function teamNames(api, season, eventCode) {
   return names;
 }
 
+/** Everyone at the event: the registered team list, plus anyone only seen in the schedule. */
+function eventTeams(names, schedule) {
+  const all = new Map(Object.entries(names).map(([number, name]) => [Number(number), name]));
+  for (const m of schedule) {
+    for (const t of m.teams || []) {
+      if (t.teamNumber && !all.has(t.teamNumber)) all.set(t.teamNumber, t.teamName || '');
+    }
+  }
+  return [...all].map(([number, name]) => ({ number, name })).sort((a, b) => a.number - b.number);
+}
+
 async function teamName(api, season, teamNumber) {
   try {
     const data = await api.get(`/${season}/teams?teamNumber=${teamNumber}`);
@@ -60,7 +71,16 @@ async function fetchDashboard(settings, credentials) {
   const event = await findEvent(api, season, settings);
 
   if (!event) {
-    return { season, teamNumber, teamName: await teamName(api, season, teamNumber), event: null, matches: [], nextMatch: null };
+    return {
+      season,
+      teamNumber,
+      teamName: await teamName(api, season, teamNumber),
+      event: null,
+      eventTeams: [],
+      matches: [],
+      nextMatch: null,
+      onField: null,
+    };
   }
 
   const [qual, playoff, names] = await Promise.all([
@@ -68,6 +88,7 @@ async function fetchDashboard(settings, credentials) {
     hybridSchedule(api, season, event.code, 'playoff'),
     teamNames(api, season, event.code).catch(() => ({})),
   ]);
+  const schedule = [...qual, ...playoff];
 
   return {
     season,
@@ -80,7 +101,8 @@ async function fetchDashboard(settings, credentials) {
       dateStart: event.dateStart,
       dateEnd: event.dateEnd,
     },
-    ...buildMatches([...qual, ...playoff], teamNumber, names),
+    eventTeams: eventTeams(names, schedule),
+    ...buildMatches(schedule, teamNumber, names),
   };
 }
 
