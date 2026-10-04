@@ -6,6 +6,8 @@ export const matchTime = (iso) => (iso ? iso.slice(11, 16) : '');
 
 export const shortDate = (iso) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
 
+export const fieldName = (field) => (field ? `Field ${field}` : '');
+
 export const stat = (v) => (Number.isFinite(v) ? v.toFixed(1) : '—');
 
 

@@ -30,6 +30,11 @@ function matchLabel(m, level) {
 // A match that has started is no longer "next", even before its result is posted.
 const hasStarted = (m) => Boolean(m.actualStartTime || m.postResultTime);
 
+const levelOf = (m) => (/^qual/i.test(m.tournamentLevel || '') ? 'qual' : 'playoff');
+
+/** Identifies a match the same way in the hybrid and the regular schedule. */
+const matchKey = (m) => `${levelOf(m)}-${m.series || 0}-${m.matchNumber}`;
+
 function toTeam(t, names) {
   return {
     number: t.teamNumber,
@@ -46,7 +51,7 @@ function toMatch(m, teamNumber, names = {}) {
 
   const alliance = me.station.startsWith('Red') ? 'red' : 'blue';
   const side = alliance === 'red' ? 'Red' : 'Blue';
-  const level = /^qual/i.test(m.tournamentLevel || '') ? 'qual' : 'playoff';
+  const level = levelOf(m);
 
   const hasScore = Number.isFinite(m.scoreRedFinal) && Number.isFinite(m.scoreBlueFinal);
   const ours = alliance === 'red' ? m.scoreRedFinal : m.scoreBlueFinal;
@@ -55,11 +60,12 @@ function toMatch(m, teamNumber, names = {}) {
   if (hasScore && m.postResultTime) outcome = ours > theirs ? 'win' : ours < theirs ? 'loss' : 'tie';
 
   return {
-    key: `${level}-${m.series || 0}-${m.matchNumber}`,
+    key: matchKey(m),
     level,
     label: matchLabel(m, level),
     description: m.description || '',
     startTime: m.startTime || null,
+    field: m.field ? String(m.field) : null,
     station: me.station,
     alliance,
     partners: teams.filter((t) => t.station.startsWith(side) && t.teamNumber !== teamNumber).map((t) => toTeam(t, names)),
@@ -73,6 +79,7 @@ function toMatch(m, teamNumber, names = {}) {
 /**
  * `schedule` is the whole event in playing order (quals, then playoffs).
  * For the next match it adds `matchesBefore`: how many matches still have to start before ours.
+ * `currentMatch` is ours while it's being played: started, no result posted yet.
  */
 function buildMatches(schedule, teamNumber, names) {
   let lastStarted = -1;
@@ -82,10 +89,12 @@ function buildMatches(schedule, teamNumber, names) {
 
   const matches = [];
   let nextMatch = null;
+  let currentMatch = null;
   schedule.forEach((m, i) => {
     const match = toMatch(m, teamNumber, names);
     if (!match) return;
     matches.push(match);
+    if (match.started && !m.postResultTime) currentMatch = match;
     if (!nextMatch && !match.started) {
       nextMatch = { ...match, matchesBefore: Math.max(0, i - lastStarted - 1) };
     }
@@ -95,8 +104,9 @@ function buildMatches(schedule, teamNumber, names) {
   return {
     matches,
     nextMatch,
-    onField: onField ? matchLabel(onField, /^qual/i.test(onField.tournamentLevel || '') ? 'qual' : 'playoff') : null,
+    currentMatch,
+    onField: onField ? matchLabel(onField, levelOf(onField)) : null,
   };
 }
 
-module.exports = { seasonForDate, localDateString, pickEvent, matchLabel, toMatch, buildMatches };
+module.exports = { seasonForDate, localDateString, pickEvent, matchLabel, matchKey, toMatch, buildMatches };

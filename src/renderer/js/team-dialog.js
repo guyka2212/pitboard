@@ -61,12 +61,12 @@ function renderCard(card) {
 
   $('team-title').replaceChildren(el('span', { class: 'tc-number' }, String(card.number)), el('span', { class: 'tc-name' }, card.name));
   $('team-sub').textContent = card.location;
-  $('team-body').replaceChildren(
+  $('team-body').replaceChildren(...[
     card.eventCode && statsSection('This event', card.event, card.event && card.event.rank ? `#${card.event.rank}` : '—'),
     statsSection(`Season ${card.statsSeason}`, season, seasonRank,
       [seasonNote, season && season.rankedOf ? `Rank = world rank by np OPR, out of ${season.rankedOf} teams.` : null].filter(Boolean).join(' ')),
     historySection(card.history),
-  );
+  ].filter(Boolean));
 }
 
 export async function openTeam(number) {

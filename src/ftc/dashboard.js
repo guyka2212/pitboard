@@ -1,5 +1,5 @@
 const { createClient, FtcApiError } = require('./client');
-const { seasonForDate, pickEvent, buildMatches } = require('./schedule');
+const { seasonForDate, pickEvent, buildMatches, matchKey } = require('./schedule');
 
 async function currentSeason(api) {
   try {
@@ -20,6 +20,23 @@ async function hybridSchedule(api, season, eventCode, level) {
     if (err.status === 400 || err.status === 404) return [];
     throw err;
   }
+}
+
+/**
+ * Which field each match is played on. Only the regular schedule has it, not the hybrid one.
+ * Nice to have, so a failure here just means no field numbers.
+ */
+async function fieldsByMatch(api, season, eventCode) {
+  const fields = new Map();
+  await Promise.all(['qual', 'playoff'].map(async (level) => {
+    try {
+      const data = await api.get(`/${season}/schedule/${encodeURIComponent(eventCode)}?tournamentLevel=${level}`);
+      for (const m of data.schedule || []) if (m.field) fields.set(matchKey(m), String(m.field));
+    } catch {
+      // keep going without fields
+    }
+  }));
+  return fields;
 }
 
 async function teamNames(api, season, eventCode) {
@@ -79,16 +96,20 @@ async function fetchDashboard(settings, credentials) {
       eventTeams: [],
       matches: [],
       nextMatch: null,
+      currentMatch: null,
       onField: null,
     };
   }
 
-  const [qual, playoff, names] = await Promise.all([
+  const [qual, playoff, names, fields] = await Promise.all([
     hybridSchedule(api, season, event.code, 'qual'),
     hybridSchedule(api, season, event.code, 'playoff'),
     teamNames(api, season, event.code).catch(() => ({})),
+    fieldsByMatch(api, season, event.code),
   ]);
-  const schedule = [...qual, ...playoff];
+  // Field numbers only mean something when the event runs more than one field.
+  const multipleFields = new Set(fields.values()).size > 1;
+  const schedule = [...qual, ...playoff].map((m) => ({ ...m, field: (multipleFields && fields.get(matchKey(m))) || null }));
 
   return {
     season,

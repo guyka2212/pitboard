@@ -35,3 +35,8 @@ test('notification text', () => {
   assert.deepEqual(describe(data(2).nextMatch), { title: '2 matches until ours', body: 'Q14 · Red · with 22222' });
   assert.equal(describe(data(0).nextMatch).title, 'Our match is up next!');
 });
+
+test('notification names the field when there is one', () => {
+  const match = { ...data(2).nextMatch, field: '2' };
+  assert.equal(describe(match).body, 'Q14 · Red · Field 2 · with 22222');
+});

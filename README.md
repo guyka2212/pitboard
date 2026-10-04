@@ -6,14 +6,17 @@ that rings a team member's phone and calls them back to the pit.
 
 | Area                   | Shows |
 |------------------------|-------|
-| **Alliance**            | Alliance color and station for the next match |
-| **Next match partner**  | Alliance partner and opponents for the next match, and how many matches are left before it |
-| **Our matches**         | All of your matches at the event: partner, opponents, color, result. The next one is highlighted |
+| **Alliance**            | Alliance color, station and field for the next match |
+| **Next match partner**  | Alliance partner and opponents for the next match, how many matches are left before it, and our match while it is being played |
+| **Our matches**         | All of your matches at the event: partner, opponents, color, field, result. The next one is highlighted |
 | **Checklist**           | Pre-match checklist. It clears itself whenever the next match changes |
 | **Emergency**           | Phones connected through the phone app, each with an alert button |
 
 When only two matches are left before yours, the app shows a full-screen alert with sound. It also
 flashes the taskbar button and sends a Windows notification, once per match.
+
+At events with more than one field, every match shows which field it's on (from the FTC
+schedule). At single-field events the field isn't shown.
 
 ## Chat
 

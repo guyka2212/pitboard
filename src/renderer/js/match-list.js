@@ -1,5 +1,5 @@
 import { $, el, teamLink } from './dom.js';
-import { COLOR_NAME, OUTCOME_NAME, matchTime } from './format.js';
+import { COLOR_NAME, OUTCOME_NAME, fieldName, matchTime } from './format.js';
 
 let scrolledToKey = null;
 
@@ -39,7 +39,8 @@ export function renderMatchList({ dashboard }) {
     const isNext = match.key === nextKey;
     const row = el('li', { class: ['match', match.alliance, match.started && 'started', isNext && 'next'].filter(Boolean).join(' ') },
       el('span', { class: 'bar', title: COLOR_NAME[match.alliance] }),
-      el('div', { class: 'm-label', title: match.description }, match.label, el('span', { class: 'm-time' }, matchTime(match.startTime))),
+      el('div', { class: 'm-label', title: match.description }, match.label, el('span', { class: 'm-time' }, matchTime(match.startTime)),
+        match.field && el('span', { class: 'm-field' }, fieldName(match.field))),
       el('div', { class: 'm-sides' },
         teamsLine('With', match.partners, 'with'),
         teamsLine('vs', match.opponents, 'against'),

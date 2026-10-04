@@ -650,3 +650,31 @@ h2 {
 .chat-foot { display: flex; justify-content: space-between; min-height: 18px; margin-top: 4px; }
 .chat-count { color: var(--muted); font-size: 12px; }
 .chat-count.over { color: var(--danger-text); }
+
+/* field numbers (only present when the event runs more than one field) */
+.field-tag {
+  margin-top: 14px;
+  padding: 4px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #12151c;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.m-field { display: block; margin-top: 2px; color: var(--accent); font-size: 11px; font-weight: 700; }
+.now-playing {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 14px;
+  font-weight: 700;
+}
+.now-playing.red { box-shadow: inset 0 0 0 1px var(--red); }
+.now-playing.blue { box-shadow: inset 0 0 0 1px var(--blue); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: live 1.2s ease-in-out infinite; }
+@keyframes live { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }

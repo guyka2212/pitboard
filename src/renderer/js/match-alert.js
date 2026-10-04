@@ -1,5 +1,5 @@
 import { $, el } from './dom.js';
-import { COLOR_NAME } from './format.js';
+import { COLOR_NAME, fieldName } from './format.js';
 import { alarm } from './sound.js';
 
 const RING_FOR_MS = 30000;
@@ -23,7 +23,7 @@ export function showMatchAlert({ match, title }) {
   const partners = match.partners.map((t) => `${t.display}${t.name ? ` ${t.name}` : ''}`).join(' · ');
   $('ma-content').replaceChildren(
     el('div', { class: 'ma-title' }, title),
-    el('div', { class: 'ma-match' }, `${match.label} · ${COLOR_NAME[match.alliance]} · ${match.station}`),
+    el('div', { class: 'ma-match' }, [match.label, COLOR_NAME[match.alliance], match.station, fieldName(match.field)].filter(Boolean).join(' · ')),
     partners && el('div', { class: 'ma-line' }, `With ${partners}`),
     vs && el('div', { class: 'ma-line' }, `Against ${vs}`),
   );

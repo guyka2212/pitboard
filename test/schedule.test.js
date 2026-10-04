@@ -139,3 +139,24 @@ test('our match is next in line when the one before it is on the field', () => {
   const schedule = [qual(1, [1, 2, 3, 4], true), qual(2, [18833, 5, 6, 7], false)];
   assert.equal(buildMatches(schedule, 18833, {}).nextMatch.matchesBefore, 0);
 });
+
+test('the field travels with the match', () => {
+  const m = toMatch({ ...upcomingQual, field: '2' }, 18833);
+  assert.equal(m.field, '2');
+  assert.equal(toMatch(upcomingQual, 18833).field, null);
+});
+
+test('our match in progress is the current match, not the next one', () => {
+  const inProgress = { ...upcomingQual, matchNumber: 4, description: 'Qualification 4', actualStartTime: 'x', postResultTime: null };
+  const later = { ...upcomingQual, matchNumber: 9, description: 'Qualification 9' };
+  const { currentMatch, nextMatch } = buildMatches([playedQual, inProgress, later], 18833, {});
+  assert.equal(currentMatch.label, 'Q4');
+  assert.equal(nextMatch.label, 'Q9');
+  assert.equal(buildMatches([playedQual, later], 18833, {}).currentMatch, null, 'a finished match is not current');
+});
+
+test('match keys line up between the hybrid and the regular schedule', () => {
+  const { matchKey } = require('../src/ftc/schedule');
+  assert.equal(matchKey({ tournamentLevel: 'QUALIFICATION', series: 0, matchNumber: 7 }), matchKey({ tournamentLevel: 'qual', matchNumber: 7 }));
+  assert.notEqual(matchKey({ tournamentLevel: 'PLAYOFF', series: 2, matchNumber: 1 }), matchKey({ tournamentLevel: 'PLAYOFF', series: 3, matchNumber: 1 }));
+});

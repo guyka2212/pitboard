@@ -22,7 +22,8 @@ function describe(match) {
   const color = match.alliance === 'red' ? 'Red' : 'Blue';
   const partners = match.partners.map((t) => t.display).join(', ');
   const before = match.matchesBefore === 0 ? 'Our match is up next!' : `${match.matchesBefore} matches until ours`;
-  return { title: before, body: `${match.label} · ${color}${partners ? ` · with ${partners}` : ''}` };
+  const field = match.field ? ` · Field ${match.field}` : '';
+  return { title: before, body: `${match.label} · ${color}${field}${partners ? ` · with ${partners}` : ''}` };
 }
 
 module.exports = { MatchAlert, describe, MATCHES_BEFORE };

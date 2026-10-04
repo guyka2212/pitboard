@@ -1,5 +1,5 @@
 import { $, el, teamLink } from './dom.js';
-import { COLOR_NAME, matchTime } from './format.js';
+import { COLOR_NAME, fieldName, matchTime } from './format.js';
 
 function emptyMessage(dashboard) {
   if (!dashboard || dashboard.status === 'loading') return 'Loading data…';
@@ -39,11 +39,16 @@ export function renderNextMatch({ dashboard }) {
   }
 
   const match = dashboard.data.nextMatch;
-  $('next-label').textContent = match.label;
+  $('next-label').textContent = [match.label, fieldName(match.field)].filter(Boolean).join(' · ');
   countdown.textContent = countdownText(match, dashboard.data.onField);
   countdown.classList.toggle('soon', match.matchesBefore <= 2);
   colorPanel.classList.add(match.alliance);
-  color.replaceChildren(COLOR_NAME[match.alliance], el('small', {}, match.station));
+  // DOM append() would print "null"/"false" for optional parts, so filter them out first.
+  color.replaceChildren(...[
+    COLOR_NAME[match.alliance],
+    el('small', {}, match.station),
+    match.field && el('span', { class: 'field-tag' }, fieldName(match.field)),
+  ].filter(Boolean));
 
   const partners = match.partners.length
     ? match.partners.map((team) =>
@@ -53,13 +58,17 @@ export function renderNextMatch({ dashboard }) {
         ))
     : [el('div', { class: 'empty' }, 'No alliance partner in this match')];
 
-  partner.append(
+  const current = dashboard.data.currentMatch;
+  partner.append(...[
+    current && el('div', { class: `now-playing ${current.alliance}` },
+      el('span', { class: 'live-dot' }),
+      ['Playing now', current.label, COLOR_NAME[current.alliance], fieldName(current.field)].filter(Boolean).join(' · ')),
     el('div', { class: 'partner-teams' }, partners),
     match.opponents.length > 0 &&
       el('div', { class: `versus ${match.alliance === 'red' ? 'blue' : 'red'}` },
         el('span', { class: 'versus-label' }, 'vs'),
         match.opponents.map((team) => el('span', { class: 'versus-team' }, teamLink(team), el('small', {}, team.name))),
       ),
-    match.startTime && el('div', { class: 'p-time' }, `Match ${match.label} · ${matchTime(match.startTime)}`),
-  );
+    match.startTime && el('div', { class: 'p-time' }, ['Match ' + match.label, matchTime(match.startTime), fieldName(match.field)].filter(Boolean).join(' · ')),
+  ].filter(Boolean));
 }

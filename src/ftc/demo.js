@@ -52,6 +52,7 @@ function demoDashboard(teamNumber) {
       matchNumber: n,
       description: `Qualification ${n}`,
       startTime: `${day}T${time}:00`,
+      field: String(((n - 1) % 2) + 1), // two fields, alternating like a real event
       actualStartTime: started ? `${day}T${time}:30` : null,
       postResultTime: scored ? `${day}T${time}:59` : null,
       scoreRedFinal: scored ? redScore : null,
