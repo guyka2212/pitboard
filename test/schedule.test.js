@@ -125,7 +125,7 @@ test('counts how many matches still start before ours', () => {
   const { nextMatch, onField } = buildMatches(schedule, 18833, {});
   assert.equal(nextMatch.label, 'Q5');
   assert.equal(nextMatch.matchesBefore, 2);
-  assert.equal(onField, 'Q2');
+  assert.deepEqual(onField, { label: 'Q2', field: null });
 });
 
 test('before the event starts, every earlier match counts', () => {
@@ -159,4 +159,9 @@ test('match keys line up between the hybrid and the regular schedule', () => {
   const { matchKey } = require('../src/ftc/schedule');
   assert.equal(matchKey({ tournamentLevel: 'QUALIFICATION', series: 0, matchNumber: 7 }), matchKey({ tournamentLevel: 'qual', matchNumber: 7 }));
   assert.notEqual(matchKey({ tournamentLevel: 'PLAYOFF', series: 2, matchNumber: 1 }), matchKey({ tournamentLevel: 'PLAYOFF', series: 3, matchNumber: 1 }));
+});
+
+test('the match on the field carries its field number', () => {
+  const schedule = [qual(1, [1, 2, 3, 4], true), { ...qual(2, [5, 6, 7, 8], true), field: '2' }, qual(3, [18833, 9, 10, 11], false)];
+  assert.deepEqual(buildMatches(schedule, 18833, {}).onField, { label: 'Q2', field: '2' });
 });

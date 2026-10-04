@@ -14,7 +14,8 @@ function emptyMessage(dashboard) {
 
 function countdownText(match, onField) {
   if (!Number.isInteger(match.matchesBefore)) return '';
-  const field = onField ? ` · on field: ${onField}` : '';
+  let field = '';
+  if (onField) field = onField.field ? ` · on Field ${onField.field}: ${onField.label}` : ` · on field: ${onField.label}`;
   if (match.matchesBefore === 0) return `Up next${field}`;
   if (match.matchesBefore === 1) return `1 match away${field}`;
   return `${match.matchesBefore} matches away${field}`;

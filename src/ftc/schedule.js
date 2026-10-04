@@ -105,7 +105,7 @@ function buildMatches(schedule, teamNumber, names) {
     matches,
     nextMatch,
     currentMatch,
-    onField: onField ? matchLabel(onField, levelOf(onField)) : null,
+    onField: onField ? { label: matchLabel(onField, levelOf(onField)), field: onField.field ? String(onField.field) : null } : null,
   };
 }
 
