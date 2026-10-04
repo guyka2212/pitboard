@@ -92,11 +92,11 @@ test('pickEvent prefers the current or next event, then the latest past one', ()
     { code: 'A', dateStart: '2026-09-20T00:00:00', dateEnd: '2026-09-20T00:00:00' },
     { code: 'C', dateStart: '2027-01-10T00:00:00', dateEnd: '2027-01-11T00:00:00' },
   ];
-  assert.equal(pickEvent(events, '2026-10-02').code, 'B');
-  assert.equal(pickEvent(events, '2026-11-14').code, 'B');
-  assert.equal(pickEvent(events, '2027-01-11').code, 'C');
-  assert.equal(pickEvent(events, '2027-05-01').code, 'C');
-  assert.equal(pickEvent([], '2026-10-02'), null);
+  assert.equal(pickEvent(events, new Date(2026, 9, 2, 12)).code, 'B');
+  assert.equal(pickEvent(events, new Date(2026, 10, 14, 12)).code, 'B');
+  assert.equal(pickEvent(events, new Date(2027, 0, 11, 12)).code, 'C');
+  assert.equal(pickEvent(events, new Date(2027, 4, 1, 12)).code, 'C');
+  assert.equal(pickEvent([], new Date(2026, 9, 2)), null);
 });
 
 test('season follows the September kickoff', () => {
@@ -164,4 +164,31 @@ test('match keys line up between the hybrid and the regular schedule', () => {
 test('the match on the field carries its field number', () => {
   const schedule = [qual(1, [1, 2, 3, 4], true), { ...qual(2, [5, 6, 7, 8], true), field: '2' }, qual(3, [18833, 9, 10, 11], false)];
   assert.deepEqual(buildMatches(schedule, 18833, {}).onField, { label: 'Q2', field: '2' });
+});
+
+test('an event is still today until the day ends at the venue', () => {
+  const texas = { code: 'TX', dateStart: '2026-10-03T00:00:00', dateEnd: '2026-10-03T00:00:00', timezone: 'America/Chicago' };
+  const later = { code: 'NEXT', dateStart: '2026-11-07T00:00:00', dateEnd: '2026-11-07T00:00:00', timezone: 'America/Chicago' };
+  // 21:30 UTC on Oct 3 is past midnight in Israel but 16:30 in Texas.
+  assert.equal(pickEvent([texas, later], new Date(Date.UTC(2026, 9, 3, 21, 30))).code, 'TX');
+  // 06:00 UTC on Oct 4 is 01:00 in Texas, so the event is over.
+  assert.equal(pickEvent([texas, later], new Date(Date.UTC(2026, 9, 4, 6, 0))).code, 'NEXT');
+  // An unknown time zone falls back to the computer's date instead of crashing.
+  assert.equal(pickEvent([{ ...texas, timezone: 'Not/AZone' }], new Date(2026, 9, 3, 12)).code, 'TX');
+});
+
+test('matches committed 0-0 within seconds were skipped, not played', () => {
+  // Real data from USTXCECCN: Q9-Q13 were all posted 0-0 about 7 seconds after "starting".
+  const skipped = { ...upcomingQual, matchNumber: 9, actualStartTime: '2026-10-03T11:44:36.074', postResultTime: '2026-10-03T11:44:43.802', scoreRedFinal: 0, scoreBlueFinal: 0 };
+  const m = toMatch(skipped, 18833);
+  assert.equal(m.started, false);
+  assert.equal(m.score, null);
+  assert.equal(m.outcome, null);
+  assert.equal(buildMatches([playedQual, skipped], 18833, {}).nextMatch.label, 'Q9');
+
+  // A real 0-0 match takes minutes and still counts.
+  const realZero = { ...skipped, postResultTime: '2026-10-03T11:48:20.000' };
+  assert.equal(toMatch(realZero, 18833).outcome, 'tie');
+  // A fast commit with points on the board is a real result.
+  assert.equal(toMatch({ ...skipped, scoreRedFinal: 12 }, 18833).outcome, 'win');
 });

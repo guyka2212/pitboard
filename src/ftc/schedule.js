@@ -10,12 +10,25 @@ function localDateString(d = new Date()) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** The event happening today or next; when all are over, the most recent one. */
-function pickEvent(events, today = localDateString()) {
+/** Today's date (YYYY-MM-DD) where the event is, e.g. "America/Chicago". */
+function dateAt(timeZone, now) {
+  if (!timeZone) return localDateString(now);
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+  } catch {
+    return localDateString(now);
+  }
+}
+
+/**
+ * The event happening today or next; when all are over, the most recent one.
+ * "Today" is the date at the venue: a Texas event is still running after midnight in Israel.
+ */
+function pickEvent(events, now = new Date()) {
   const byStart = events
     .filter((e) => e && e.code)
     .sort((a, b) => (a.dateStart || '').localeCompare(b.dateStart || ''));
-  const upcoming = byStart.find((e) => (e.dateEnd || e.dateStart || '').slice(0, 10) >= today);
+  const upcoming = byStart.find((e) => (e.dateEnd || e.dateStart || '').slice(0, 10) >= dateAt(e.timezone, now));
   return upcoming || byStart[byStart.length - 1] || null;
 }
 
@@ -27,8 +40,18 @@ function matchLabel(m, level) {
   return `P${m.series || m.matchNumber}`;
 }
 
+// A real match takes 2:30 plus scoring. Scorekeepers sometimes commit a run of matches as 0-0
+// within seconds (a test run, or skipping ahead); FTC's own site shows those as unplayed.
+const MIN_PLAYED_MS = 60 * 1000;
+
+function wasSkipped(m) {
+  if (m.scoreRedFinal !== 0 || m.scoreBlueFinal !== 0 || !m.actualStartTime || !m.postResultTime) return false;
+  const ran = Date.parse(m.postResultTime) - Date.parse(m.actualStartTime);
+  return Number.isFinite(ran) && ran < MIN_PLAYED_MS;
+}
+
 // A match that has started is no longer "next", even before its result is posted.
-const hasStarted = (m) => Boolean(m.actualStartTime || m.postResultTime);
+const hasStarted = (m) => !wasSkipped(m) && Boolean(m.actualStartTime || m.postResultTime);
 
 const levelOf = (m) => (/^qual/i.test(m.tournamentLevel || '') ? 'qual' : 'playoff');
 
@@ -53,7 +76,7 @@ function toMatch(m, teamNumber, names = {}) {
   const side = alliance === 'red' ? 'Red' : 'Blue';
   const level = levelOf(m);
 
-  const hasScore = Number.isFinite(m.scoreRedFinal) && Number.isFinite(m.scoreBlueFinal);
+  const hasScore = !wasSkipped(m) && Number.isFinite(m.scoreRedFinal) && Number.isFinite(m.scoreBlueFinal);
   const ours = alliance === 'red' ? m.scoreRedFinal : m.scoreBlueFinal;
   const theirs = alliance === 'red' ? m.scoreBlueFinal : m.scoreRedFinal;
   let outcome = null;
