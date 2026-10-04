@@ -6,6 +6,7 @@ function emptyMessage(dashboard) {
   if (dashboard.status === 'unconfigured') return 'Enter your team number in Settings';
   if (!dashboard.data) return dashboard.error ? 'No data' : '';
   if (!dashboard.data.event) return `No events published for the team in the ${dashboard.data.season} season yet`;
+  if (dashboard.data.schedulePending) return "Today's match schedule isn't on FTC yet";
   if (!dashboard.data.nextMatch) {
     return dashboard.data.matches.length ? 'No more matches at this event' : 'The match schedule is not published yet';
   }

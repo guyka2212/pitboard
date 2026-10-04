@@ -221,3 +221,16 @@ test('surrogates are marked, ours and other teams', () => {
   assert.equal(m.opponents.find((t) => t.number === 33849).surrogate, true);
   assert.equal(m.partners[0].surrogate, false);
 });
+
+test('data FTC last changed before the event started is not shown as the team\'s matches', () => {
+  const { preEventData } = require('../src/ftc/dashboard');
+  // USTXCECCN starts Oct 4; FTC's copy is a test run from Saturday Oct 3.
+  const event = { dateStart: '2026-10-04T00:00:00', dateEnd: '2026-10-04T00:00:00', timezone: 'America/Chicago' };
+  const saturday = Date.parse('Sat, 03 Oct 2026 16:45:09 GMT');
+  assert.equal(preEventData(event, saturday, '2026-10-04'), true);
+  assert.equal(preEventData(event, saturday, '2026-10-03'), false, 'a schedule published the day before is fine before the event');
+  assert.equal(preEventData(event, Date.parse('Sun, 04 Oct 2026 14:00:00 GMT'), '2026-10-04'), false);
+  // Day two of a two-day event with day-one data is real data, just not live.
+  const twoDay = { ...event, dateEnd: '2026-10-05T00:00:00' };
+  assert.equal(preEventData(twoDay, Date.parse('Sun, 04 Oct 2026 22:00:00 GMT'), '2026-10-05'), false);
+});

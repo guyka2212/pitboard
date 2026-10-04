@@ -39,6 +39,16 @@ async function fieldsByMatch(api, season, eventCode) {
   return fields;
 }
 
+/**
+ * The event has started, but everything FTC has for it was made before the first day:
+ * a test run or an early draft, not the schedule the teams are actually playing.
+ */
+function preEventData(event, ftcUpdatedAt, today) {
+  const start = (event.dateStart || '').slice(0, 10);
+  if (!ftcUpdatedAt || !start || today < start) return false;
+  return dateAt(event.timezone, new Date(ftcUpdatedAt)) < start;
+}
+
 /** The event runs today, but FTC's copy of it hasn't changed since an earlier day. */
 function notSyncedToday(event, ftcUpdatedAt, today) {
   const start = (event.dateStart || '').slice(0, 10);
@@ -120,6 +130,8 @@ async function fetchDashboard(settings, credentials) {
   const schedule = [...qual.matches, ...playoff.matches].map((m) => ({ ...m, field: (multipleFields && fields.get(matchKey(m))) || null }));
   const today = dateAt(event.timezone, new Date());
   const ftcUpdatedAt = Math.max(qual.lastModified || 0, playoff.lastModified || 0) || null;
+  const schedulePending = preEventData(event, ftcUpdatedAt, today);
+  const empty = { matches: [], nextMatch: null, currentMatch: null, onField: null };
 
   return {
     season,
@@ -137,9 +149,11 @@ async function fetchDashboard(settings, credentials) {
     // data when the scorekeeper syncs them, so this is what tells "no new matches" from "not synced".
     ftcUpdatedAt,
     ftcNotSyncedToday: notSyncedToday(event, ftcUpdatedAt, today),
+    // Pre-event data would show matches the team isn't actually playing, so show none instead.
+    schedulePending,
     eventTeams: eventTeams(names, schedule),
-    ...buildMatches(schedule, teamNumber, names),
+    ...(schedulePending ? empty : buildMatches(schedule, teamNumber, names)),
   };
 }
 
-module.exports = { fetchDashboard, notSyncedToday };
+module.exports = { fetchDashboard, notSyncedToday, preEventData };

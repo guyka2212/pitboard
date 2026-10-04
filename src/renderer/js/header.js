@@ -30,17 +30,8 @@ export function renderHeader({ settings, dashboard }) {
 export function renderBanner({ dashboard }) {
   const banner = $('banner');
   const data = dashboard && dashboard.data;
-  let text = '';
-  let warning = false;
   // Without any data the error is already shown in the panels themselves.
-  if (dashboard && dashboard.error && data) {
-    text = `Can't update: ${dashboard.error}. Showing the last data.`;
-  } else if (data && data.ftcNotSyncedToday) {
-    warning = true;
-    text = `FTC hasn't published anything new for this event today (last change ${dayAndTime(data.ftcUpdatedAt)}). `
-      + "Today's matches show up here once the event's scorekeeper syncs them to FTC.";
-  }
+  const text = dashboard && dashboard.error && data ? `Can't update: ${dashboard.error}. Showing the last data.` : '';
   banner.hidden = !text;
-  banner.classList.toggle('warning', warning);
   banner.textContent = text;
 }

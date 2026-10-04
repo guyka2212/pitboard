@@ -29,7 +29,12 @@ export function renderMatchList({ dashboard }) {
   list.replaceChildren();
   const data = dashboard && dashboard.data;
   if (!data || !data.matches.length) {
-    if (data && data.event) list.append(el('li', { class: 'empty-note' }, 'The match schedule is not published yet'));
+    if (data && data.event) {
+      const note = data.schedulePending
+        ? "Today's match schedule isn't on FTC yet. It appears here as soon as the event syncs it."
+        : 'The match schedule is not published yet';
+      list.append(el('li', { class: 'empty-note' }, note));
+    }
     return;
   }
 
