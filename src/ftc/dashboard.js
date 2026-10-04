@@ -126,12 +126,15 @@ async function findEvent(api, season, settings) {
     if (settings.eventCode) {
       const data = await api.get(`/${season}/events?eventCode=${encodeURIComponent(settings.eventCode)}`);
       const event = (data.events || [])[0];
-      if (!event) throw new FtcApiError(`Event ${settings.eventCode} not found in the ${season} season`, 404);
+      if (!event) throw new FtcApiError(`Event ${settings.eventCode} isn't in the ${season} season. Check the Season setting.`, 404);
       return event;
     }
     const data = await api.get(`/${season}/events?teamNumber=${teamNumber}`);
     return pickEvent(data.events || []);
   } catch (err) {
+    if (err.status === 404 && settings.eventCode) {
+      throw new FtcApiError(`Event ${settings.eventCode} isn't in the ${season} season. Check the Season setting.`, 404);
+    }
     // A wrong account or an unknown event is a real answer; only a failed connection is worth retrying elsewhere.
     if (err.status && err.status !== 429 && err.status < 500) throw err;
     try {
