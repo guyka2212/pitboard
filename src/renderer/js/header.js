@@ -1,5 +1,5 @@
 import { $ } from './dom.js';
-import { clock, shortDate } from './format.js';
+import { clock, dayAndTime, shortDate } from './format.js';
 
 export function renderHeader({ settings, dashboard }) {
   const data = dashboard && dashboard.data;
@@ -16,15 +16,31 @@ export function renderHeader({ settings, dashboard }) {
   status.classList.toggle('error', Boolean(dashboard && dashboard.error));
   if (loading) status.textContent = 'Loading…';
   else if (dashboard.error) status.textContent = dashboard.error;
-  else if (dashboard.updatedAt) status.textContent = `${settings.demoMode ? 'Demo · ' : ''}Updated ${clock(dashboard.updatedAt)}`;
-  else status.textContent = '';
+  else if (dashboard.updatedAt) {
+    // "Checked" is when PitBoard last asked; "FTC data" is when FTC last changed anything for the event.
+    status.textContent = [
+      settings.demoMode && 'Demo',
+      `Checked ${clock(dashboard.updatedAt)}`,
+      data && data.ftcUpdatedAt && `FTC data ${dayAndTime(data.ftcUpdatedAt)}`,
+    ].filter(Boolean).join(' · ');
+  } else status.textContent = '';
   $('btn-refresh').classList.toggle('spinning', loading);
 }
 
 export function renderBanner({ dashboard }) {
   const banner = $('banner');
+  const data = dashboard && dashboard.data;
+  let text = '';
+  let warning = false;
   // Without any data the error is already shown in the panels themselves.
-  const show = Boolean(dashboard && dashboard.error && dashboard.data);
-  banner.hidden = !show;
-  if (show) banner.textContent = `Can't update: ${dashboard.error}. Showing the last data.`;
+  if (dashboard && dashboard.error && data) {
+    text = `Can't update: ${dashboard.error}. Showing the last data.`;
+  } else if (data && data.ftcNotSyncedToday) {
+    warning = true;
+    text = `FTC hasn't published anything new for this event today (last change ${dayAndTime(data.ftcUpdatedAt)}). `
+      + "Today's matches show up here once the event's scorekeeper syncs them to FTC.";
+  }
+  banner.hidden = !text;
+  banner.classList.toggle('warning', warning);
+  banner.textContent = text;
 }

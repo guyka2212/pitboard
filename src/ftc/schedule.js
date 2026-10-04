@@ -132,4 +132,4 @@ function buildMatches(schedule, teamNumber, names) {
   };
 }
 
-module.exports = { seasonForDate, localDateString, pickEvent, matchLabel, matchKey, toMatch, buildMatches };
+module.exports = { seasonForDate, localDateString, dateAt, pickEvent, matchLabel, matchKey, toMatch, buildMatches };

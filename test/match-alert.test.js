@@ -40,3 +40,9 @@ test('notification names the field when there is one', () => {
   const match = { ...data(2).nextMatch, field: '2' };
   assert.equal(describe(match).body, 'Q14 · Red · Field 2 · with 22222');
 });
+
+test('no alert from data FTC has not updated today', () => {
+  const alert = new MatchAlert();
+  assert.equal(alert.check({ ...data(1), ftcNotSyncedToday: true }), null);
+  assert.equal(alert.check(data(1)).label, 'Q14', 'alerts once the data is current');
+});

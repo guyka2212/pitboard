@@ -20,7 +20,8 @@ const STATUS_MESSAGES = {
 function createClient({ apiUsername, apiKey }) {
   const authorization = `Basic ${Buffer.from(`${apiUsername}:${apiKey}`).toString('base64')}`;
 
-  async function get(pathAndQuery) {
+  /** The parsed body plus when FTC last changed that data (Last-Modified), as epoch ms or null. */
+  async function request(pathAndQuery) {
     let res;
     try {
       res = await fetch(BASE_URL + pathAndQuery, {
@@ -34,16 +35,20 @@ function createClient({ apiUsername, apiKey }) {
     if (!res.ok) {
       throw new FtcApiError(STATUS_MESSAGES[res.status] || `FTC server error (${res.status})`, res.status);
     }
+    const modified = Date.parse(res.headers.get('last-modified') || '');
+    const lastModified = Number.isFinite(modified) ? modified : null;
     const text = await res.text();
-    if (!text) return {};
+    if (!text) return { data: {}, lastModified };
     try {
-      return JSON.parse(text);
+      return { data: JSON.parse(text), lastModified };
     } catch {
       throw new FtcApiError('Invalid response from the FTC server', res.status);
     }
   }
 
-  return { get };
+  const get = async (pathAndQuery) => (await request(pathAndQuery)).data;
+
+  return { get, request };
 }
 
 module.exports = { createClient, FtcApiError };

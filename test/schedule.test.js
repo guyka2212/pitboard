@@ -192,3 +192,14 @@ test('matches committed 0-0 within seconds were skipped, not played', () => {
   // A fast commit with points on the board is a real result.
   assert.equal(toMatch({ ...skipped, scoreRedFinal: 12 }, 18833).outcome, 'win');
 });
+
+test('an event running today with FTC data from an earlier day is flagged', () => {
+  const { notSyncedToday } = require('../src/ftc/dashboard');
+  // USTXCECCN on Oct 4: FTC's copy was last changed Saturday afternoon.
+  const event = { dateStart: '2026-10-04T00:00:00', dateEnd: '2026-10-04T00:00:00', timezone: 'America/Chicago' };
+  const saturday = Date.parse('Sat, 03 Oct 2026 16:45:09 GMT');
+  assert.equal(notSyncedToday(event, saturday, '2026-10-04'), true);
+  assert.equal(notSyncedToday(event, Date.parse('Sun, 04 Oct 2026 14:00:00 GMT'), '2026-10-04'), false);
+  assert.equal(notSyncedToday(event, saturday, '2026-10-03'), false, 'not flagged before the event');
+  assert.equal(notSyncedToday(event, null, '2026-10-04'), false);
+});

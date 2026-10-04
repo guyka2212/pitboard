@@ -1,5 +1,5 @@
 const { createClient, FtcApiError } = require('./client');
-const { seasonForDate, pickEvent, buildMatches, matchKey } = require('./schedule');
+const { seasonForDate, pickEvent, buildMatches, matchKey, dateAt } = require('./schedule');
 
 async function currentSeason(api) {
   try {
@@ -13,11 +13,11 @@ async function currentSeason(api) {
 
 async function hybridSchedule(api, season, eventCode, level) {
   try {
-    const data = await api.get(`/${season}/schedule/${encodeURIComponent(eventCode)}/${level}/hybrid`);
-    return Array.isArray(data.schedule) ? data.schedule : [];
+    const { data, lastModified } = await api.request(`/${season}/schedule/${encodeURIComponent(eventCode)}/${level}/hybrid`);
+    return { matches: Array.isArray(data.schedule) ? data.schedule : [], lastModified };
   } catch (err) {
     // Playoffs aren't published until alliance selection; that's not an error.
-    if (err.status === 400 || err.status === 404) return [];
+    if (err.status === 400 || err.status === 404) return { matches: [], lastModified: null };
     throw err;
   }
 }
@@ -37,6 +37,14 @@ async function fieldsByMatch(api, season, eventCode) {
     }
   }));
   return fields;
+}
+
+/** The event runs today, but FTC's copy of it hasn't changed since an earlier day. */
+function notSyncedToday(event, ftcUpdatedAt, today) {
+  const start = (event.dateStart || '').slice(0, 10);
+  const end = (event.dateEnd || event.dateStart || '').slice(0, 10);
+  if (!ftcUpdatedAt || today < start || today > end) return false;
+  return dateAt(event.timezone, new Date(ftcUpdatedAt)) < today;
 }
 
 async function teamNames(api, season, eventCode) {
@@ -109,7 +117,9 @@ async function fetchDashboard(settings, credentials) {
   ]);
   // Field numbers only mean something when the event runs more than one field.
   const multipleFields = new Set(fields.values()).size > 1;
-  const schedule = [...qual, ...playoff].map((m) => ({ ...m, field: (multipleFields && fields.get(matchKey(m))) || null }));
+  const schedule = [...qual.matches, ...playoff.matches].map((m) => ({ ...m, field: (multipleFields && fields.get(matchKey(m))) || null }));
+  const today = dateAt(event.timezone, new Date());
+  const ftcUpdatedAt = Math.max(qual.lastModified || 0, playoff.lastModified || 0) || null;
 
   return {
     season,
@@ -121,10 +131,15 @@ async function fetchDashboard(settings, credentials) {
       city: event.city,
       dateStart: event.dateStart,
       dateEnd: event.dateEnd,
+      timezone: event.timezone || null,
     },
+    // When FTC last changed this event's schedule or results. Events only appear live in FTC's
+    // data when the scorekeeper syncs them, so this is what tells "no new matches" from "not synced".
+    ftcUpdatedAt,
+    ftcNotSyncedToday: notSyncedToday(event, ftcUpdatedAt, today),
     eventTeams: eventTeams(names, schedule),
     ...buildMatches(schedule, teamNumber, names),
   };
 }
 
-module.exports = { fetchDashboard };
+module.exports = { fetchDashboard, notSyncedToday };

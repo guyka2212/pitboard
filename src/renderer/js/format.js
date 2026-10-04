@@ -11,4 +11,6 @@ export const fieldName = (field) => (field ? `Field ${field}` : '');
 export const stat = (v) => (Number.isFinite(v) ? v.toFixed(1) : '—');
 
 
+export const dayAndTime = (ms) => new Date(ms).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+
 export const clock = (ms) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
