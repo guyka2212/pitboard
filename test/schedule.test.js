@@ -203,3 +203,21 @@ test('an event running today with FTC data from an earlier day is flagged', () =
   assert.equal(notSyncedToday(event, saturday, '2026-10-03'), false, 'not flagged before the event');
   assert.equal(notSyncedToday(event, null, '2026-10-04'), false);
 });
+
+test('matches are put in playing order whatever order FTC returns them in', () => {
+  const others = [1, 2, 3, 4];
+  const playoff = { ...qual(1, [18833, 5, 6, 7], false), tournamentLevel: 'PLAYOFF', series: 2, description: 'Upper Bracket Round 1 Match 2' };
+  const shuffled = [qual(5, [18833, 5, 6, 7], false), playoff, qual(2, others, true), qual(1, others, true), qual(3, others, false), qual(4, others, false)];
+  const { matches, nextMatch, onField } = buildMatches(shuffled, 18833, {});
+  assert.deepEqual(matches.map((m) => m.label), ['Q5', 'P2']);
+  assert.equal(nextMatch.label, 'Q5');
+  assert.equal(nextMatch.matchesBefore, 2, 'Q3 and Q4 are still to come');
+  assert.equal(onField.label, 'Q2');
+});
+
+test('surrogates are marked, ours and other teams', () => {
+  const m = toMatch({ ...upcomingQual, teams: upcomingQual.teams.map((t) => ({ ...t, surrogate: t.teamNumber === 18833 || t.teamNumber === 33849 })) }, 18833);
+  assert.equal(m.surrogate, true);
+  assert.equal(m.opponents.find((t) => t.number === 33849).surrogate, true);
+  assert.equal(m.partners[0].surrogate, false);
+});

@@ -679,3 +679,5 @@ h2 {
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: live 1.2s ease-in-out infinite; }
 @keyframes live { 50% { opacity: 0.3; } }
 @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+
+.surrogate { margin-inline-start: 1px; color: var(--accent); font-weight: 700; }

@@ -72,6 +72,6 @@ export function renderNextMatch({ dashboard }) {
         el('span', { class: 'versus-label' }, 'vs'),
         match.opponents.map((team) => el('span', { class: 'versus-team' }, teamLink(team), el('small', {}, team.name))),
       ),
-    match.startTime && el('div', { class: 'p-time' }, ['Match ' + match.label, matchTime(match.startTime), fieldName(match.field)].filter(Boolean).join(' · ')),
+    match.startTime && el('div', { class: 'p-time' }, ['Match ' + match.label, matchTime(match.startTime), fieldName(match.field), match.surrogate && 'Surrogate: does not count for our ranking'].filter(Boolean).join(' · ')),
   ].filter(Boolean));
 }

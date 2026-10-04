@@ -28,7 +28,12 @@ const ICONS = {
 
 /** A team number that opens the team card when clicked (see main.js). */
 export function teamLink(team) {
-  return el('button', { type: 'button', class: 'team-link', 'data-team': team.number, title: 'Team stats' }, team.display || String(team.number));
+  return el('button', {
+    type: 'button',
+    class: 'team-link',
+    'data-team': team.number,
+    title: team.surrogate ? 'Surrogate: this match does not count for their ranking. Click for team stats.' : 'Team stats',
+  }, team.display || String(team.number), team.surrogate && el('span', { class: 'surrogate' }, '*'));
 }
 
 export function icon(name, size = 18) {

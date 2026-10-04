@@ -63,7 +63,22 @@ function toTeam(t, names) {
     number: t.teamNumber,
     display: t.displayTeamNumber || String(t.teamNumber),
     name: t.teamName || names[t.teamNumber] || '',
+    // A surrogate plays an extra match whose result doesn't count for its ranking.
+    surrogate: Boolean(t.surrogate),
   };
+}
+
+/**
+ * The FTC API doesn't promise any order, and everything that counts matches (next match,
+ * "matches away", on field) depends on it: quals by number, then playoffs by series and number.
+ */
+function inPlayingOrder(matches) {
+  const rank = (m) => [levelOf(m) === 'qual' ? 0 : 1, m.series || 0, m.matchNumber || 0];
+  return [...matches].sort((a, b) => {
+    const x = rank(a);
+    const y = rank(b);
+    return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+  });
 }
 
 /** Converts a hybrid-schedule match, or returns null when `teamNumber` doesn't play in it. */
@@ -91,6 +106,7 @@ function toMatch(m, teamNumber, names = {}) {
     field: m.field ? String(m.field) : null,
     station: me.station,
     alliance,
+    surrogate: Boolean(me.surrogate),
     partners: teams.filter((t) => t.station.startsWith(side) && t.teamNumber !== teamNumber).map((t) => toTeam(t, names)),
     opponents: teams.filter((t) => !t.station.startsWith(side)).map((t) => toTeam(t, names)),
     started: hasStarted(m),
@@ -104,7 +120,8 @@ function toMatch(m, teamNumber, names = {}) {
  * For the next match it adds `matchesBefore`: how many matches still have to start before ours.
  * `currentMatch` is ours while it's being played: started, no result posted yet.
  */
-function buildMatches(schedule, teamNumber, names) {
+function buildMatches(unordered, teamNumber, names) {
+  const schedule = inPlayingOrder(unordered);
   let lastStarted = -1;
   schedule.forEach((m, i) => {
     if (hasStarted(m)) lastStarted = i;
@@ -132,4 +149,4 @@ function buildMatches(schedule, teamNumber, names) {
   };
 }
 
-module.exports = { seasonForDate, localDateString, dateAt, pickEvent, matchLabel, matchKey, toMatch, buildMatches };
+module.exports = { seasonForDate, localDateString, dateAt, pickEvent, matchLabel, matchKey, inPlayingOrder, toMatch, buildMatches };
