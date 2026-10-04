@@ -83,7 +83,10 @@ function inPlayingOrder(matches) {
 
 /** Converts a hybrid-schedule match, or returns null when `teamNumber` doesn't play in it. */
 function toMatch(m, teamNumber, names = {}) {
-  const teams = (m.teams || []).filter((t) => t && t.teamNumber && typeof t.station === 'string');
+  // Station order (Red1, Red2…), so the same match lists teams the same way from either source.
+  const teams = (m.teams || [])
+    .filter((t) => t && t.teamNumber && typeof t.station === 'string')
+    .sort((a, b) => a.station.localeCompare(b.station));
   const me = teams.find((t) => t.teamNumber === teamNumber);
   if (!me) return null;
 

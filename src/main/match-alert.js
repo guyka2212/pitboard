@@ -10,7 +10,7 @@ class MatchAlert {
   /** Returns the match to announce, or null. */
   check(data) {
     // Counting matches on data FTC hasn't updated today would send people running for nothing.
-    if (!data || data.ftcNotSyncedToday) return null;
+    if (!data || data.dataNotSyncedToday) return null;
     const next = data.nextMatch;
     if (!next || !Number.isInteger(next.matchesBefore) || next.matchesBefore > this.matchesBefore) return null;
     const key = `${data.event && data.event.code}:${data.teamNumber}:${next.key}`;

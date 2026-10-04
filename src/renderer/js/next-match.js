@@ -43,7 +43,7 @@ export function renderNextMatch({ dashboard }) {
   const match = dashboard.data.nextMatch;
   $('next-label').textContent = [match.label, fieldName(match.field)].filter(Boolean).join(' · ');
   // A countdown on data FTC hasn't updated today would be wrong; the banner explains why.
-  const stale = dashboard.data.ftcNotSyncedToday;
+  const stale = dashboard.data.dataNotSyncedToday;
   countdown.textContent = stale ? 'Not live: FTC data is from an earlier day' : countdownText(match, dashboard.data.onField);
   countdown.classList.toggle('soon', !stale && match.matchesBefore <= 2);
   colorPanel.classList.add(match.alliance);

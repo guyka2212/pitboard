@@ -1,5 +1,9 @@
 const { createClient, FtcApiError } = require('./client');
 const { seasonForDate, pickEvent, buildMatches, matchKey, dateAt } = require('./schedule');
+const { chooseSource, conflicts } = require('./sources');
+const scout = require('../scout/event-schedule');
+
+const SOURCE_NAME = { ftc: 'FTC Events', ftcscout: 'FTCScout' };
 
 async function currentSeason(api) {
   try {
@@ -22,8 +26,35 @@ async function hybridSchedule(api, season, eventCode, level) {
   }
 }
 
+/** The event's schedule as FTC Events has it, or { error } if FTC can't be reached. */
+async function ftcSchedule(api, season, eventCode) {
+  try {
+    const [qual, playoff] = await Promise.all([
+      hybridSchedule(api, season, eventCode, 'qual'),
+      hybridSchedule(api, season, eventCode, 'playoff'),
+    ]);
+    return {
+      matches: [...qual.matches, ...playoff.matches],
+      updatedAt: Math.max(qual.lastModified || 0, playoff.lastModified || 0) || null,
+    };
+  } catch (err) {
+    return { matches: [], updatedAt: null, error: err.message };
+  }
+}
+
+/** The same from FTCScout, or { error } if it doesn't have the event or can't be reached. */
+async function scoutSchedule(season, eventCode) {
+  try {
+    const result = await scout.eventSchedule(season, eventCode);
+    if (!result) return { matches: [], updatedAt: null, names: {}, error: 'FTCScout has no data for this event yet' };
+    return result;
+  } catch (err) {
+    return { matches: [], updatedAt: null, names: {}, error: err.message };
+  }
+}
+
 /**
- * Which field each match is played on. Only the regular schedule has it, not the hybrid one.
+ * Which field each match is played on. Only FTC's regular schedule has it.
  * Nice to have, so a failure here just means no field numbers.
  */
 async function fieldsByMatch(api, season, eventCode) {
@@ -40,21 +71,21 @@ async function fieldsByMatch(api, season, eventCode) {
 }
 
 /**
- * The event has started, but everything FTC has for it was made before the first day:
+ * The event has started, but everything the source has for it was made before the first day:
  * a test run or an early draft, not the schedule the teams are actually playing.
  */
-function preEventData(event, ftcUpdatedAt, today) {
+function preEventData(event, updatedAt, today) {
   const start = (event.dateStart || '').slice(0, 10);
-  if (!ftcUpdatedAt || !start || today < start) return false;
-  return dateAt(event.timezone, new Date(ftcUpdatedAt)) < start;
+  if (!updatedAt || !start || today < start) return false;
+  return dateAt(event.timezone, new Date(updatedAt)) < start;
 }
 
-/** The event runs today, but FTC's copy of it hasn't changed since an earlier day. */
-function notSyncedToday(event, ftcUpdatedAt, today) {
+/** The event runs today, but the data hasn't changed since an earlier day. */
+function notSyncedToday(event, updatedAt, today) {
   const start = (event.dateStart || '').slice(0, 10);
   const end = (event.dateEnd || event.dateStart || '').slice(0, 10);
-  if (!ftcUpdatedAt || today < start || today > end) return false;
-  return dateAt(event.timezone, new Date(ftcUpdatedAt)) < today;
+  if (!updatedAt || today < start || today > end) return false;
+  return dateAt(event.timezone, new Date(updatedAt)) < today;
 }
 
 async function teamNames(api, season, eventCode) {
@@ -88,15 +119,38 @@ async function teamName(api, season, teamNumber) {
   }
 }
 
+/** Finds the event on FTC Events; if FTC can't be reached, on FTCScout. */
 async function findEvent(api, season, settings) {
-  if (settings.eventCode) {
-    const data = await api.get(`/${season}/events?eventCode=${encodeURIComponent(settings.eventCode)}`);
-    const event = (data.events || [])[0];
-    if (!event) throw new FtcApiError(`Event ${settings.eventCode} not found in the ${season} season`, 404);
-    return event;
+  const teamNumber = Number(settings.teamNumber);
+  try {
+    if (settings.eventCode) {
+      const data = await api.get(`/${season}/events?eventCode=${encodeURIComponent(settings.eventCode)}`);
+      const event = (data.events || [])[0];
+      if (!event) throw new FtcApiError(`Event ${settings.eventCode} not found in the ${season} season`, 404);
+      return event;
+    }
+    const data = await api.get(`/${season}/events?teamNumber=${teamNumber}`);
+    return pickEvent(data.events || []);
+  } catch (err) {
+    // A wrong account or an unknown event is a real answer; only a failed connection is worth retrying elsewhere.
+    if (err.status && err.status !== 429 && err.status < 500) throw err;
+    try {
+      if (settings.eventCode) {
+        const fallback = await scout.eventSchedule(season, settings.eventCode);
+        if (fallback) return fallback.event;
+      } else {
+        const events = await scout.teamEvents(teamNumber, season);
+        if (events.length) return pickEvent(events);
+      }
+    } catch {
+      // FTCScout is down too; report FTC's error below
+    }
+    throw err;
   }
-  const data = await api.get(`/${season}/events?teamNumber=${settings.teamNumber}`);
-  return pickEvent(data.events || []);
+}
+
+function summary(source) {
+  return { matches: source.matches.length, updatedAt: source.updatedAt || null, error: source.error || null };
 }
 
 async function fetchDashboard(settings, credentials) {
@@ -119,18 +173,23 @@ async function fetchDashboard(settings, credentials) {
     };
   }
 
-  const [qual, playoff, names, fields] = await Promise.all([
-    hybridSchedule(api, season, event.code, 'qual'),
-    hybridSchedule(api, season, event.code, 'playoff'),
+  const [ftc, ftcscout, ftcNames, fields] = await Promise.all([
+    ftcSchedule(api, season, event.code),
+    scoutSchedule(season, event.code),
     teamNames(api, season, event.code).catch(() => ({})),
     fieldsByMatch(api, season, event.code),
   ]);
+  if (ftc.error && ftcscout.error) throw new FtcApiError(ftc.error, 0);
+
+  const used = chooseSource(ftc, ftcscout);
+  const chosen = used === 'ftc' ? ftc : ftcscout;
+  const names = { ...ftcscout.names, ...ftcNames };
+
   // Field numbers only mean something when the event runs more than one field.
   const multipleFields = new Set(fields.values()).size > 1;
-  const schedule = [...qual.matches, ...playoff.matches].map((m) => ({ ...m, field: (multipleFields && fields.get(matchKey(m))) || null }));
+  const schedule = chosen.matches.map((m) => ({ ...m, field: (multipleFields && fields.get(matchKey(m))) || null }));
   const today = dateAt(event.timezone, new Date());
-  const ftcUpdatedAt = Math.max(qual.lastModified || 0, playoff.lastModified || 0) || null;
-  const schedulePending = preEventData(event, ftcUpdatedAt, today);
+  const schedulePending = preEventData(event, chosen.updatedAt, today);
   const empty = { matches: [], nextMatch: null, currentMatch: null, onField: null };
 
   return {
@@ -145,10 +204,18 @@ async function fetchDashboard(settings, credentials) {
       dateEnd: event.dateEnd,
       timezone: event.timezone || null,
     },
-    // When FTC last changed this event's schedule or results. Events only appear live in FTC's
-    // data when the scorekeeper syncs them, so this is what tells "no new matches" from "not synced".
-    ftcUpdatedAt,
-    ftcNotSyncedToday: notSyncedToday(event, ftcUpdatedAt, today),
+    source: {
+      used: SOURCE_NAME[used],
+      ftc: summary(ftc),
+      ftcscout: summary(ftcscout),
+      // Both had matches but listed different teams or matches: worth knowing which one is shown.
+      disagree: !ftc.error && !ftcscout.error && ftc.matches.length > 0 && ftcscout.matches.length > 0
+        && conflicts(ftc.matches, ftcscout.matches) > 0,
+    },
+    // When the shown data last changed. Events only appear live once the scorekeeper syncs
+    // them, so this is what tells "no new matches" from "not synced".
+    dataUpdatedAt: chosen.updatedAt || null,
+    dataNotSyncedToday: notSyncedToday(event, chosen.updatedAt, today),
     // Pre-event data would show matches the team isn't actually playing, so show none instead.
     schedulePending,
     eventTeams: eventTeams(names, schedule),

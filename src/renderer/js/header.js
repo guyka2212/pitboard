@@ -1,6 +1,20 @@
 import { $ } from './dom.js';
 import { clock, dayAndTime, shortDate } from './format.js';
 
+/** e.g. "FTC Events Sat 19:45", plus a note when FTCScout lists different matches. */
+function sourceText(data) {
+  if (!data.source) return '';
+  const when = data.dataUpdatedAt ? ` ${dayAndTime(data.dataUpdatedAt)}` : '';
+  return `${data.source.used}${when}${data.source.disagree ? ' (sources differ)' : ''}`;
+}
+
+/** Hover text with what each source returned. */
+function sourceDetails(data) {
+  if (!data.source) return '';
+  const line = (name, s) => `${name}: ${s.error ? s.error : `${s.matches} matches${s.updatedAt ? `, updated ${dayAndTime(s.updatedAt)}` : ''}`}`;
+  return [`Showing ${data.source.used}`, line('FTC Events', data.source.ftc), line('FTCScout', data.source.ftcscout)].join('\n');
+}
+
 export function renderHeader({ settings, dashboard }) {
   const data = dashboard && dashboard.data;
   $('hdr-team').textContent = settings.teamNumber ? `#${settings.teamNumber}` : 'PitBoard';
@@ -21,8 +35,9 @@ export function renderHeader({ settings, dashboard }) {
     status.textContent = [
       settings.demoMode && 'Demo',
       `Checked ${clock(dashboard.updatedAt)}`,
-      data && data.ftcUpdatedAt && `FTC data ${dayAndTime(data.ftcUpdatedAt)}`,
+      data && sourceText(data),
     ].filter(Boolean).join(' · ');
+    status.title = data ? sourceDetails(data) : '';
   } else status.textContent = '';
   $('btn-refresh').classList.toggle('spinning', loading);
 }

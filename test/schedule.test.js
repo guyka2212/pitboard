@@ -37,7 +37,7 @@ test('toMatch reads alliance, partner and result from our side', () => {
   assert.equal(m.alliance, 'red');
   assert.equal(m.station, 'Red2');
   assert.deepEqual(m.partners.map((p) => p.number), [16473]);
-  assert.deepEqual(m.opponents.map((p) => p.number), [33849, 24321]);
+  assert.deepEqual(m.opponents.map((p) => p.number), [24321, 33849], 'Blue1 before Blue2');
   assert.deepEqual(m.score, { ours: 175, theirs: 108 });
   assert.equal(m.outcome, 'win');
   assert.equal(m.started, true);

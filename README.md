@@ -18,6 +18,20 @@ flashes the taskbar button and sends a Windows notification, once per match.
 At events with more than one field, every match shows which field it's on (from the FTC
 schedule). At single-field events the field isn't shown.
 
+## Data sources
+
+Every refresh reads the event from both the FTC Events API and FTCScout:
+
+- **Only one source has matches:** that one is used, and the other is ignored.
+- **Same schedule in both:** the one with more matches played is used. A tie goes to FTC Events.
+- **Different schedules** (different teams or matches): the one updated most recently is used, and
+  the top bar says "(sources differ)".
+- **FTC Events unreachable:** the event and its matches come from FTCScout.
+
+The top bar shows which source is on screen and when it last changed. Hover it to see what each
+source returned. Field numbers come from FTC Events only. Data a source last changed before the
+event's first day (a test run, as at some training events) isn't shown as the team's matches.
+
 ## Chat
 
 The chat button next to the scout button (and the small chat button next to each phone in the
